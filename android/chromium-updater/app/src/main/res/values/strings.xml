@@ -1,3 +1,5 @@
 <resources>
     <string name="app_name">Be-4</string>
+    <string name="des">This app will install or update to the latest version of the chromium browser for android. Please grant the \"install unknown apps\" permission in settings</string>
+    <string name="action">Install/Update</string>
 </resources>

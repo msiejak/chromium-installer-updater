@@ -12,6 +12,7 @@ import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.FileProvider
 import androidx.core.net.toUri
+import com.msiejak.lab.chromiumupdater.databinding.ActivityMainBinding
 import java.io.*
 import java.util.zip.ZipEntry
 import java.util.zip.ZipInputStream
@@ -19,30 +20,28 @@ import java.util.zip.ZipInputStream
 
 class MainActivity : AppCompatActivity() {
     lateinit var receiver: BroadcastReceiver
+    lateinit var binding: ActivityMainBinding
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_main)
+        binding = ActivityMainBinding.inflate(layoutInflater)
+        setContentView(binding.root)
         receiver = object : BroadcastReceiver() {
             override fun onReceive(context: Context?, intent: Intent?) {
-                unzip(
-                    File(externalCacheDir, "/chromium/chromium.zip"),
-                    File(externalCacheDir, "/chromium/extracted")
-                )
+                unzip(File(externalCacheDir, "/chromium/chromium.zip"), File(externalCacheDir, "/chromium/extracted"))
             }
         }
         registerReceiver(receiver, IntentFilter(DownloadManager.ACTION_DOWNLOAD_COMPLETE))
-        update()
+        binding.startButton.setOnClickListener{ update() }
     }
 
     private fun update() {
-        Toast.makeText(this, "test", Toast.LENGTH_LONG).show()
+        Toast.makeText(this, "working...", Toast.LENGTH_LONG).show()
         File(externalCacheDir?.absolutePath + "/chromium").deleteRecursively()
         File(externalCacheDir?.absolutePath + "/chromium").mkdir()
         val request =
             DownloadManager.Request(Uri.parse("https://download-chromium.appspot.com/dl/Android?type=snapshots"))
         val uri = "file://${externalCacheDir?.absolutePath}/chromium/chromium.zip".toUri()
         request.setDestinationUri(uri)
-        Log.e(uri.toString(), "update: ")
         val manager = getSystemService(Context.DOWNLOAD_SERVICE) as DownloadManager
         manager.enqueue(request)
     }
@@ -80,7 +79,7 @@ class MainActivity : AppCompatActivity() {
     private fun install() {
         val uri = FileProvider.getUriForFile(
             this,
-            getApplicationContext().getPackageName() + ".provider",
+            applicationContext.packageName + ".provider",
             File(externalCacheDir, "/chromium/extracted/chrome-android/apks/ChromePublic.apk")
         )
         val install = Intent(Intent.ACTION_VIEW)
