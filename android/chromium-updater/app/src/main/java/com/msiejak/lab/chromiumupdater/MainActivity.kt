@@ -35,6 +35,14 @@ class MainActivity : AppCompatActivity() {
         }
         registerReceiver(receiver, IntentFilter(DownloadManager.ACTION_DOWNLOAD_COMPLETE))
         binding.startButton.setOnClickListener{ update() }
+        binding.topAppBar.setOnMenuItemClickListener() { item ->
+            when (item.itemId) {
+                R.id.refresh -> {
+                    setChromiumVersionText()
+                    true
+                }else -> true
+            }
+        }
     }
 
     private fun update() {
