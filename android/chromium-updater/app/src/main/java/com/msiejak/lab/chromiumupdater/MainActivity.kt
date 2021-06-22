@@ -18,11 +18,11 @@ import java.util.zip.ZipInputStream
 
 
 class MainActivity : AppCompatActivity() {
+    lateinit var receiver: BroadcastReceiver
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
-        update()
-        val receiver = object : BroadcastReceiver() {
+        receiver = object : BroadcastReceiver() {
             override fun onReceive(context: Context?, intent: Intent?) {
                 unzip(
                     File(externalCacheDir, "/chromium/chromium.zip"),
@@ -30,8 +30,8 @@ class MainActivity : AppCompatActivity() {
                 )
             }
         }
-
         registerReceiver(receiver, IntentFilter(DownloadManager.ACTION_DOWNLOAD_COMPLETE))
+        update()
     }
 
     private fun update() {
@@ -91,4 +91,8 @@ class MainActivity : AppCompatActivity() {
         startActivity(install)
     }
 
+    override fun onDestroy() {
+        super.onDestroy()
+        unregisterReceiver(receiver)
+    }
 }
