@@ -48,6 +48,8 @@ class MainActivity : AppCompatActivity() {
         manager.enqueue(request)
     }
 
+
+
     @Throws(IOException::class)
     fun unzip(zipFile: File?, targetDirectory: File?) {
         val zis = ZipInputStream(
@@ -94,7 +96,6 @@ class MainActivity : AppCompatActivity() {
         install.putExtra(Intent.EXTRA_NOT_UNKNOWN_SOURCE, true)
         install.data = uri
         startActivity(install)
-        setChromiumVersionText()
     }
 
     private fun setChromiumVersionText() {
