@@ -5,12 +5,14 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
+import android.content.pm.PackageInfo
 import android.net.Uri
 import android.os.Bundle
 import android.util.Log
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.FileProvider
+import androidx.core.content.pm.PackageInfoCompat
 import androidx.core.net.toUri
 import com.msiejak.lab.chromiumupdater.databinding.ActivityMainBinding
 import java.io.*
@@ -25,6 +27,7 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
+        setChromiumVersionText()
         receiver = object : BroadcastReceiver() {
             override fun onReceive(context: Context?, intent: Intent?) {
                 unzip(File(externalCacheDir, "/chromium/chromium.zip"), File(externalCacheDir, "/chromium/extracted"))
@@ -38,8 +41,7 @@ class MainActivity : AppCompatActivity() {
         Toast.makeText(this, "working...", Toast.LENGTH_LONG).show()
         File(externalCacheDir?.absolutePath + "/chromium").deleteRecursively()
         File(externalCacheDir?.absolutePath + "/chromium").mkdir()
-        val request =
-            DownloadManager.Request(Uri.parse("https://download-chromium.appspot.com/dl/Android?type=snapshots"))
+        val request = DownloadManager.Request(Uri.parse("https://download-chromium.appspot.com/dl/Android?type=snapshots"))
         val uri = "file://${externalCacheDir?.absolutePath}/chromium/chromium.zip".toUri()
         request.setDestinationUri(uri)
         val manager = getSystemService(Context.DOWNLOAD_SERVICE) as DownloadManager
@@ -55,20 +57,24 @@ class MainActivity : AppCompatActivity() {
             var ze: ZipEntry
             var count: Int
             val buffer = ByteArray(8192)
-            while (zis.nextEntry.also { ze = it } != null) {
-                val file = File(targetDirectory, ze.name)
-                val dir = if (ze.isDirectory) file else file.parentFile
-                if (!dir.isDirectory && !dir.mkdirs()) throw FileNotFoundException(
-                    "Failed to ensure directory: " +
-                            dir.absolutePath
-                )
-                if (ze.isDirectory) continue
-                val fout = FileOutputStream(file)
-                try {
-                    while (zis.read(buffer).also { count = it } != -1) fout.write(buffer, 0, count)
-                } finally {
-                    fout.close()
+            try {
+                while (zis.nextEntry.also { ze = it } != null) {
+                    val file = File(targetDirectory, ze.name)
+                    val dir = if (ze.isDirectory) file else file.parentFile
+                    if (!dir.isDirectory && !dir.mkdirs()) throw FileNotFoundException(
+                        "Failed to ensure directory: " +
+                                dir.absolutePath
+                    )
+                    if (ze.isDirectory) continue
+                    val fout = FileOutputStream(file)
+                    try {
+                        while (zis.read(buffer).also { count = it } != -1) fout.write(buffer, 0, count)
+                    } finally {
+                        fout.close()
+                    }
                 }
+            }catch (e: Exception){
+                e.printStackTrace()
             }
         } finally {
             zis.close()
@@ -88,6 +94,20 @@ class MainActivity : AppCompatActivity() {
         install.putExtra(Intent.EXTRA_NOT_UNKNOWN_SOURCE, true)
         install.data = uri
         startActivity(install)
+        setChromiumVersionText()
+    }
+
+    private fun setChromiumVersionText() {
+        var txt = getString(R.string.not_installed)
+        try {
+            val packageInfo = packageManager.getPackageInfo("org.chromium.chrome", 0)
+            txt = "Chromium Version: ${packageInfo.versionName}"
+            binding.startButton.setText(R.string.action_update)
+        }catch(e: Exception){
+            e.printStackTrace()
+            binding.startButton.setText(R.string.action_install)
+        }
+        binding.versionName.text = txt
     }
 
     override fun onDestroy() {
