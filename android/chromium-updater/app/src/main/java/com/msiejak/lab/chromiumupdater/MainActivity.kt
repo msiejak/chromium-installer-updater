@@ -9,12 +9,15 @@ import android.content.pm.PackageInfo
 import android.net.Uri
 import android.os.Bundle
 import android.util.Log
+import android.view.View
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.FileProvider
-import androidx.core.content.pm.PackageInfoCompat
 import androidx.core.net.toUri
+import androidx.lifecycle.lifecycleScope
 import com.msiejak.lab.chromiumupdater.databinding.ActivityMainBinding
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import java.io.*
 import java.util.zip.ZipEntry
 import java.util.zip.ZipInputStream
@@ -23,6 +26,7 @@ import java.util.zip.ZipInputStream
 class MainActivity : AppCompatActivity() {
     lateinit var receiver: BroadcastReceiver
     lateinit var binding: ActivityMainBinding
+    var downloaded = false
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityMainBinding.inflate(layoutInflater)
@@ -34,7 +38,7 @@ class MainActivity : AppCompatActivity() {
             }
         }
         registerReceiver(receiver, IntentFilter(DownloadManager.ACTION_DOWNLOAD_COMPLETE))
-        binding.startButton.setOnClickListener{ update() }
+        binding.startButton.setOnClickListener{ downloadBuild() }
         binding.topAppBar.setOnMenuItemClickListener() { item ->
             when (item.itemId) {
                 R.id.refresh -> {
@@ -45,7 +49,8 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun update() {
+    private fun downloadBuild() {
+        binding.progressIndicator.visibility = View.VISIBLE
         Toast.makeText(this, "working...", Toast.LENGTH_LONG).show()
         File(externalCacheDir?.absolutePath + "/chromium").deleteRecursively()
         File(externalCacheDir?.absolutePath + "/chromium").mkdir()
@@ -59,10 +64,11 @@ class MainActivity : AppCompatActivity() {
 
 
     @Throws(IOException::class)
-    fun unzip(zipFile: File?, targetDirectory: File?) {
+    private fun unzip(zipFile: File?, targetDirectory: File?) {
         val zis = ZipInputStream(
             BufferedInputStream(FileInputStream(zipFile))
         )
+        lifecycleScope.launch(Dispatchers.IO) {
         try {
             var ze: ZipEntry
             var count: Int
@@ -78,18 +84,32 @@ class MainActivity : AppCompatActivity() {
                     if (ze.isDirectory) continue
                     val fout = FileOutputStream(file)
                     try {
-                        while (zis.read(buffer).also { count = it } != -1) fout.write(buffer, 0, count)
+                        while (zis.read(buffer).also { count = it } != -1) fout.write(
+                            buffer,
+                            0,
+                            count
+                        )
                     } finally {
                         fout.close()
                     }
                 }
-            }catch (e: Exception){
+            } catch (e: Exception) {
                 e.printStackTrace()
             }
         } finally {
             zis.close()
-            install()
+            runOnUiThread {
+                binding.progressIndicator.visibility = View.GONE
+                if (checkForUpdate()) install()
+                else Toast.makeText(applicationContext, "no update avaliable", Toast.LENGTH_LONG).show() }
+            downloaded = true
+
         }
+    }
+    }
+
+    private fun checkForUpdate(): Boolean {
+        return true
     }
 
     private fun install() {
