@@ -3,7 +3,6 @@ Description=Automatic chromium updater which runs every hour
 
 [Service]
 ExecStart=/usr/bin/chromium-installer.sh
-RestartSec=3600s
 
 [Install]
 WantedBy=multi-user.target

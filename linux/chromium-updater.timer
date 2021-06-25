@@ -1,0 +1,13 @@
+[Unit]
+Description=trigger chromium update every hour
+RefuseManualStart=no
+RefuseManualStop=no
+
+[Timer]
+Persistent=true
+OnBootSec=120
+OnUnitActiveSec=3600
+Unit=chromium-updater.service
+
+[Install]
+WantedBy=timers.target
