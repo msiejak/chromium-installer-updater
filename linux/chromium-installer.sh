@@ -1,7 +1,7 @@
 #!/bin/bash
 echo Chromium Installer/Updater
 echo downloading...
-cacheDir=$HOME/.cache/chromium-installer
+cacheDir=/var/cache/chromium-installer
 rm -r $cacheDir
 mkdir $cacheDir
 curl -L https://download-chromium.appspot.com/dl/Linux_x64?type=snapshots --output $cacheDir/chromium.zip
