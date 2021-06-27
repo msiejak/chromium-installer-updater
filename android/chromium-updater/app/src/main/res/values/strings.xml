@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">Be-4</string>
+    <string name="app_name">Chromium Downloader</string>
     <string name="des">This app will install or update to the latest version of the chromium browser for android. Please grant the \"install unknown apps\" permission in settings</string>
     <string name="action_install">Install Chromium</string>
     <string name="action_update">Update Chromium</string>
