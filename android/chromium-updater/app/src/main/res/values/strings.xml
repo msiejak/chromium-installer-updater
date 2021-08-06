@@ -4,4 +4,5 @@
     <string name="action_install">Install Chromium</string>
     <string name="action_update">Update Chromium</string>
     <string name="not_installed">Chromium is not installed</string>
+    <string name="check_update">check for update</string>
 </resources>

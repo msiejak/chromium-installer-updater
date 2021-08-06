@@ -1,10 +1,12 @@
 package com.msiejak.lab.chromiumupdater
 
+import android.app.ActivityManager
 import android.app.AlarmManager
 import android.app.DownloadManager
 import android.app.PendingIntent
 import android.content.*
 import android.content.pm.PackageInfo
+import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Bundle
 import android.util.Log
@@ -22,15 +24,21 @@ import java.io.*
 import java.util.zip.ZipEntry
 import java.util.zip.ZipInputStream
 import android.net.ConnectivityManager
-
-
-
+import com.android.volley.Request
+import com.android.volley.RequestQueue
+import com.android.volley.toolbox.JsonObjectRequest
+import com.android.volley.toolbox.Volley
+import org.json.JSONException
 
 
 class MainActivity : AppCompatActivity() {
-    lateinit var receiver: BroadcastReceiver
-    lateinit var binding: ActivityMainBinding
-    var downloaded = false
+    private lateinit var receiver: BroadcastReceiver
+    private lateinit var receiver2: BroadcastReceiver
+    private lateinit var binding: ActivityMainBinding
+    private var downloaded = false
+    private var currentRemote: Long = 0
+    private var chromiumInstalled = false
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityMainBinding.inflate(layoutInflater)
@@ -49,11 +57,16 @@ class MainActivity : AppCompatActivity() {
             }
         }
         registerReceiver(receiver, IntentFilter(DownloadManager.ACTION_DOWNLOAD_COMPLETE))
-        binding.startButton.setOnClickListener{ downloadBuild() }
+        if(chromiumInstalled) {
+            binding.startButton.setOnClickListener{ checkForUpdate() }
+        }else {
+            binding.startButton.setOnClickListener{ downloadBuild() }
+        }
         binding.topAppBar.setOnMenuItemClickListener { item ->
             when (item.itemId) {
                 R.id.refresh -> {
                     setChromiumVersionText()
+                    checkForUpdate()
                     true
                 }else -> true
             }
@@ -63,6 +76,7 @@ class MainActivity : AppCompatActivity() {
     private fun downloadBuild() {
         val connectivityManager = getSystemService(CONNECTIVITY_SERVICE) as ConnectivityManager
         if(connectivityManager.activeNetworkInfo != null && connectivityManager.activeNetworkInfo!!.isConnected) {
+
             binding.progressIndicator.visibility = View.VISIBLE
             binding.startButton.isEnabled = false
             Toast.makeText(this, "working...", Toast.LENGTH_LONG).show()
@@ -128,19 +142,53 @@ class MainActivity : AppCompatActivity() {
             runOnUiThread {
                 binding.progressIndicator.visibility = View.GONE
                 binding.startButton.isEnabled = true
-                if (checkForUpdate()) install()
-                else Toast.makeText(applicationContext, "no update avaliable", Toast.LENGTH_LONG).show() }
+                install() }
             downloaded = true
 
         }
     }
     }
 
-    private fun checkForUpdate(): Boolean {
-        return true
+    private fun checkForUpdate() {
+        val queue = Volley.newRequestQueue(this)
+        val s = getSharedPreferences("shared_prefs", MODE_PRIVATE)
+        val currentInstalled = s.getLong("build", 0)
+        val url = "https://download-chromium.appspot.com/rev/Android?type=snapshots"
+        val jsonObjectRequest = JsonObjectRequest(Request.Method.GET, url, null, { response ->
+            try {
+                currentRemote = response.getString("content").toLong()
+                Log.e(currentRemote.toString(), "checkForUpdate: remote" )
+                Log.e(currentInstalled.toString(), "checkForUpdate: installed" )
+                if(currentRemote > currentInstalled) {
+                    binding.startButton.setOnClickListener{ downloadBuild() }
+                    binding.startButton.setText(R.string.action_update)
+                    binding.updateAvaliable.text = "Update Avaliable"
+                }else {
+                    binding.updateAvaliable.text = "No Update Available"
+                }
+                binding.progressIndicator.visibility = View.INVISIBLE
+            } catch (e: JSONException) {
+                Toast.makeText(this, "Error retrieving remote version", Toast.LENGTH_LONG).show()
+                binding.progressIndicator.visibility = View.INVISIBLE
+            }
+        }) { Toast.makeText(this, "Error retrieving remote version (network error)", Toast.LENGTH_LONG).show()
+            binding.progressIndicator.visibility = View.INVISIBLE}
+        jsonObjectRequest.setShouldCache(false)
+        jsonObjectRequest.setShouldRetryConnectionErrors(true)
+        queue.add(jsonObjectRequest)
+        queue.start()
+        binding.progressIndicator.visibility = View.VISIBLE
+
     }
 
     private fun install() {
+        receiver2 = object : BroadcastReceiver() {
+            override fun onReceive(context: Context?, intent: Intent?) {
+
+                Log.e("updated", "onReceive: ", )
+            }
+        }
+        registerReceiver(receiver2, IntentFilter(Intent.ACTION_PACKAGE_REPLACED))
         val uri = FileProvider.getUriForFile(
             this,
             applicationContext.packageName + ".provider",
@@ -152,14 +200,23 @@ class MainActivity : AppCompatActivity() {
         install.putExtra(Intent.EXTRA_NOT_UNKNOWN_SOURCE, true)
         install.data = uri
         startActivity(install)
+        getSharedPreferences("shared_prefs", MODE_PRIVATE).edit().putLong("build", currentRemote).apply()
+        setChromiumVersionText()
+        reset()
+    }
+
+    private fun reset() {
+        binding.startButton.setOnClickListener{ checkForUpdate() }
+        binding.updateAvaliable.text = ""
     }
 
     private fun setChromiumVersionText() {
         var txt = getString(R.string.not_installed)
         try {
             val packageInfo = packageManager.getPackageInfo("org.chromium.chrome", 0)
-            txt = "Chromium Version: ${packageInfo.versionName}"
-            binding.startButton.setText(R.string.action_update)
+            txt = "Installed Chromium Version: ${packageInfo.versionName}"
+            binding.startButton.setText(R.string.check_update)
+            chromiumInstalled = true
         }catch(e: Exception){
             e.printStackTrace()
             binding.startButton.setText(R.string.action_install)
@@ -170,5 +227,6 @@ class MainActivity : AppCompatActivity() {
     override fun onDestroy() {
         super.onDestroy()
         unregisterReceiver(receiver)
+        unregisterReceiver(receiver2)
     }
 }
