@@ -1,10 +1,9 @@
 package com.msiejak.lab.chromiumupdater
 
+import android.app.AlarmManager
 import android.app.DownloadManager
-import android.content.BroadcastReceiver
-import android.content.Context
-import android.content.Intent
-import android.content.IntentFilter
+import android.app.PendingIntent
+import android.content.*
 import android.content.pm.PackageInfo
 import android.net.Uri
 import android.os.Bundle
@@ -15,12 +14,17 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.FileProvider
 import androidx.core.net.toUri
 import androidx.lifecycle.lifecycleScope
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.msiejak.lab.chromiumupdater.databinding.ActivityMainBinding
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import java.io.*
 import java.util.zip.ZipEntry
 import java.util.zip.ZipInputStream
+import android.net.ConnectivityManager
+
+
+
 
 
 class MainActivity : AppCompatActivity() {
@@ -31,6 +35,14 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
+        val alarmManager =
+            getSystemService(Context.ALARM_SERVICE) as? AlarmManager
+        val pendingIntent =
+            PendingIntent.getService(this, 1, intent,
+                PendingIntent.FLAG_NO_CREATE)
+        if (pendingIntent != null && alarmManager != null) {
+            alarmManager.cancel(pendingIntent)
+        }
         setChromiumVersionText()
         receiver = object : BroadcastReceiver() {
             override fun onReceive(context: Context?, intent: Intent?) {
@@ -39,7 +51,7 @@ class MainActivity : AppCompatActivity() {
         }
         registerReceiver(receiver, IntentFilter(DownloadManager.ACTION_DOWNLOAD_COMPLETE))
         binding.startButton.setOnClickListener{ downloadBuild() }
-        binding.topAppBar.setOnMenuItemClickListener() { item ->
+        binding.topAppBar.setOnMenuItemClickListener { item ->
             when (item.itemId) {
                 R.id.refresh -> {
                     setChromiumVersionText()
@@ -50,15 +62,31 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun downloadBuild() {
-        binding.progressIndicator.visibility = View.VISIBLE
-        Toast.makeText(this, "working...", Toast.LENGTH_LONG).show()
-        File(externalCacheDir?.absolutePath + "/chromium").deleteRecursively()
-        File(externalCacheDir?.absolutePath + "/chromium").mkdir()
-        val request = DownloadManager.Request(Uri.parse("https://download-chromium.appspot.com/dl/Android?type=snapshots"))
-        val uri = "file://${externalCacheDir?.absolutePath}/chromium/chromium.zip".toUri()
-        request.setDestinationUri(uri)
-        val manager = getSystemService(Context.DOWNLOAD_SERVICE) as DownloadManager
-        manager.enqueue(request)
+        val connectivityManager = getSystemService(CONNECTIVITY_SERVICE) as ConnectivityManager
+        if(connectivityManager.activeNetworkInfo != null && connectivityManager.activeNetworkInfo!!.isConnected) {
+            binding.progressIndicator.visibility = View.VISIBLE
+            binding.startButton.isEnabled = false
+            Toast.makeText(this, "working...", Toast.LENGTH_LONG).show()
+            File(externalCacheDir?.absolutePath + "/chromium").deleteRecursively()
+            File(externalCacheDir?.absolutePath + "/chromium").mkdir()
+            val request =
+                DownloadManager.Request(Uri.parse("https://download-chromium.appspot.com/dl/Android?type=snapshots"))
+            val uri = "file://${externalCacheDir?.absolutePath}/chromium/chromium.zip".toUri()
+            request.setDestinationUri(uri)
+            val manager = getSystemService(Context.DOWNLOAD_SERVICE) as DownloadManager
+            manager.enqueue(request)
+        } else {
+            val builder = MaterialAlertDialogBuilder(this)
+            builder.setTitle("Network Error")
+            builder.setCancelable(false)
+            builder.setIcon(R.drawable.ic_baseline_error_outline_24)
+            builder.setPositiveButton("retry"
+            ) { _: DialogInterface?, _: Int ->
+                downloadBuild()
+            }
+            builder.setMessage("You will be unable to download chromium until you connect to the internet")
+            builder.show()
+        }
     }
 
 
@@ -100,6 +128,7 @@ class MainActivity : AppCompatActivity() {
             zis.close()
             runOnUiThread {
                 binding.progressIndicator.visibility = View.GONE
+                binding.startButton.isEnabled = true
                 if (checkForUpdate()) install()
                 else Toast.makeText(applicationContext, "no update avaliable", Toast.LENGTH_LONG).show() }
             downloaded = true
