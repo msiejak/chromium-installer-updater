@@ -38,8 +38,7 @@ class MainActivity : AppCompatActivity() {
         val alarmManager =
             getSystemService(Context.ALARM_SERVICE) as? AlarmManager
         val pendingIntent =
-            PendingIntent.getService(this, 1, intent,
-                PendingIntent.FLAG_NO_CREATE)
+            PendingIntent.getService(this, 1, intent, PendingIntent.FLAG_IMMUTABLE)
         if (pendingIntent != null && alarmManager != null) {
             alarmManager.cancel(pendingIntent)
         }
