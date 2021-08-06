@@ -84,7 +84,7 @@ class MainActivity : AppCompatActivity() {
             ) { _: DialogInterface?, _: Int ->
                 downloadBuild()
             }
-            builder.setMessage("You will be unable to download chromium until you connect to the internet")
+            builder.setMessage("You will be unable to download Chromium until you connect to the internet")
             builder.show()
         }
     }
