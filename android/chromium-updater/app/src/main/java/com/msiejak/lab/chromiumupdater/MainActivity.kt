@@ -162,7 +162,7 @@ class MainActivity : AppCompatActivity() {
                 if(currentRemote > currentInstalled) {
                     binding.startButton.setOnClickListener{ downloadBuild() }
                     binding.startButton.setText(R.string.action_update)
-                    binding.updateAvaliable.text = "Update Avaliable"
+                    binding.updateAvaliable.text = "Update Available\nNewest Version available was built at ${response.getString("last-modified")}"
                 }else {
                     binding.updateAvaliable.text = "No Update Available"
                 }
