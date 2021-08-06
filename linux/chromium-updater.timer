@@ -1,12 +1,12 @@
 [Unit]
-Description=trigger chromium update every hour
+Description=trigger a chromium update every 4 hours
 RefuseManualStart=no
 RefuseManualStop=no
 
 [Timer]
 Persistent=true
 OnBootSec=120
-OnUnitActiveSec=3600
+OnUnitActiveSec=14400
 Unit=chromium-updater.service
 
 [Install]
