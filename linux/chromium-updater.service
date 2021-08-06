@@ -1,5 +1,5 @@
 [Unit]
-Description=Automatic chromium updater which runs every hour
+Description=Automatic chromium updater which runs every 4 hours
 
 [Service]
 ExecStart=/usr/bin/chromium-installer.sh
