@@ -15,4 +15,5 @@ sudo systemctl start chromium-updater.service
 sudo systemctl enable chromium-updater.service
 sudo systemctl enable chromium-updater.timer
 sudo systemctl start chromium-updater.timer
+sudo systemctl daemon-reload
 echo done. this file can be removed
