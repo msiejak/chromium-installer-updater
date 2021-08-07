@@ -150,45 +150,52 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun checkForUpdate() {
-        val queue = Volley.newRequestQueue(this)
-        val s = getSharedPreferences("shared_prefs", MODE_PRIVATE)
-        val currentInstalled = s.getLong("build", 0)
-        val url = "https://download-chromium.appspot.com/rev/Android?type=snapshots"
-        val jsonObjectRequest = JsonObjectRequest(Request.Method.GET, url, null, { response ->
-            try {
-                currentRemote = response.getString("content").toLong()
-                Log.e(currentRemote.toString(), "checkForUpdate: remote" )
-                Log.e(currentInstalled.toString(), "checkForUpdate: installed" )
-                if(currentRemote > currentInstalled) {
+//        val queue = Volley.newRequestQueue(this)
+//        val s = getSharedPreferences("shared_prefs", MODE_PRIVATE)
+//        val currentInstalled = s.getLong("build", 0)
+//        val url = "https://download-chromium.appspot.com/rev/Android?type=snapshots"
+//        val jsonObjectRequest = JsonObjectRequest(Request.Method.GET, url, null, { response ->
+//            try {
+//                currentRemote = response.getString("content").toLong()
+//                Log.e(currentRemote.toString(), "checkForUpdate: remote" )
+//                Log.e(currentInstalled.toString(), "checkForUpdate: installed" )
+//                if(currentRemote > currentInstalled) {
+//                    binding.startButton.setOnClickListener{ downloadBuild() }
+//                    binding.startButton.setText(R.string.action_update)
+//                    binding.updateAvaliable.text = "Update Available\nNewest Version available was built at ${response.getString("last-modified")}"
+//                }else {
+//                    binding.updateAvaliable.text = "No Update Available"
+//                }
+//                binding.progressIndicator.visibility = View.INVISIBLE
+//            } catch (e: JSONException) {
+//                Toast.makeText(this, "Error retrieving remote version", Toast.LENGTH_LONG).show()
+//                binding.progressIndicator.visibility = View.INVISIBLE
+//            }
+//        }) { Toast.makeText(this, "Error retrieving remote version (network error)", Toast.LENGTH_LONG).show()
+//            binding.progressIndicator.visibility = View.INVISIBLE}
+//        jsonObjectRequest.setShouldCache(false)
+//        jsonObjectRequest.setShouldRetryConnectionErrors(true)
+//        queue.add(jsonObjectRequest)
+//        queue.start()
+
+        binding.progressIndicator.visibility = View.VISIBLE
+        UpdateChecker().check(this, object: UpdateChecker.RequestResult {
+            override fun onResult(updateAvailable: Boolean, lastModified: String, remoteVersion: Long, resultCode: Int) {
+                if(updateAvailable && resultCode == 0) {
                     binding.startButton.setOnClickListener{ downloadBuild() }
+                    currentRemote = remoteVersion
                     binding.startButton.setText(R.string.action_update)
-                    binding.updateAvaliable.text = "Update Available\nNewest Version available was built at ${response.getString("last-modified")}"
+                    binding.updateAvaliable.text = "Update Available\nNewest Version available was built at $lastModified"
                 }else {
                     binding.updateAvaliable.text = "No Update Available"
                 }
-                binding.progressIndicator.visibility = View.INVISIBLE
-            } catch (e: JSONException) {
-                Toast.makeText(this, "Error retrieving remote version", Toast.LENGTH_LONG).show()
-                binding.progressIndicator.visibility = View.INVISIBLE
             }
-        }) { Toast.makeText(this, "Error retrieving remote version (network error)", Toast.LENGTH_LONG).show()
-            binding.progressIndicator.visibility = View.INVISIBLE}
-        jsonObjectRequest.setShouldCache(false)
-        jsonObjectRequest.setShouldRetryConnectionErrors(true)
-        queue.add(jsonObjectRequest)
-        queue.start()
-        binding.progressIndicator.visibility = View.VISIBLE
+        }, 0)
+
 
     }
 
     private fun install() {
-        receiver2 = object : BroadcastReceiver() {
-            override fun onReceive(context: Context?, intent: Intent?) {
-
-                Log.e("updated", "onReceive: ", )
-            }
-        }
-        registerReceiver(receiver2, IntentFilter(Intent.ACTION_PACKAGE_REPLACED))
         val uri = FileProvider.getUriForFile(
             this,
             applicationContext.packageName + ".provider",
