@@ -13,6 +13,13 @@ import org.json.JSONException
 
 class UpdateChecker {
 
+    companion object {
+        const val UPDATE_AVAILABLE = 1
+        const val UPDATE_NOT_AVAILABLE = 2
+        const val PARSE_ERROR = 3
+        const val NETWORK_ERROR = 4
+    }
+
     fun check(c: Context, callback: RequestResult, requestCode: Int) {
         val queue = Volley.newRequestQueue(c)
         val s = c.getSharedPreferences("shared_prefs", AppCompatActivity.MODE_PRIVATE)
@@ -24,13 +31,15 @@ class UpdateChecker {
                 Log.i(currentRemote.toString(), "checkForUpdate: remote" )
                 Log.i(currentInstalled.toString(), "checkForUpdate: installed" )
                 if(currentRemote > currentInstalled) {
-                    callback.onResult(true, response.getString("last-modified"),currentRemote,  requestCode)
+                    callback.onResult(UPDATE_AVAILABLE, response.getString("last-modified"),currentRemote,  requestCode)
+                }else {
+                    callback.onResult(UPDATE_NOT_AVAILABLE, response.getString("last-modified"),currentRemote,  requestCode)
                 }
             } catch (e: Exception) {
-                callback.onResult(false,"null",0, requestCode)
+                callback.onResult(PARSE_ERROR,"null",0, requestCode)
             }
         }) {
-        //valley error
+            callback.onResult(NETWORK_ERROR,"null",0, requestCode)
         }
         jsonObjectRequest.setShouldCache(false)
         jsonObjectRequest.setShouldRetryConnectionErrors(true)
@@ -39,7 +48,7 @@ class UpdateChecker {
     }
 
     interface RequestResult {
-        fun onResult(updateAvailable: Boolean, lastModified: String, remoteVersion: Long, resultCode: Int)
+        fun onResult(updateAvailable: Int, lastModified: String, remoteVersion: Long, resultCode: Int)
     }
 
 }

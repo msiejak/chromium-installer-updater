@@ -29,6 +29,13 @@ import com.android.volley.RequestQueue
 import com.android.volley.toolbox.JsonObjectRequest
 import com.android.volley.toolbox.Volley
 import org.json.JSONException
+import android.content.Intent
+import androidx.work.Constraints
+import androidx.work.NetworkType
+import androidx.work.PeriodicWorkRequestBuilder
+import androidx.work.WorkManager
+import com.msiejak.lab.chromiumupdater.service.UpdateNotificationService
+import java.util.concurrent.TimeUnit
 
 
 class MainActivity : AppCompatActivity() {
@@ -46,10 +53,12 @@ class MainActivity : AppCompatActivity() {
         val alarmManager =
             getSystemService(Context.ALARM_SERVICE) as? AlarmManager
         val pendingIntent =
-            PendingIntent.getService(this, 1, intent, PendingIntent.FLAG_IMMUTABLE)
+            PendingIntent.getService(this, 1, intent,
+                PendingIntent.FLAG_IMMUTABLE)
         if (pendingIntent != null && alarmManager != null) {
             alarmManager.cancel(pendingIntent)
         }
+        startService()
         setChromiumVersionText()
         receiver = object : BroadcastReceiver() {
             override fun onReceive(context: Context?, intent: Intent?) {
@@ -71,6 +80,15 @@ class MainActivity : AppCompatActivity() {
                 }else -> true
             }
         }
+    }
+
+    private fun startService() {
+        val constraints = Constraints.Builder()
+            .setRequiresBatteryNotLow(true)
+            .setRequiredNetworkType(NetworkType.CONNECTED)
+            .build()
+        val periodicWorkRequest = PeriodicWorkRequestBuilder<UpdateNotificationService>(40, TimeUnit.MINUTES).setConstraints(constraints).build()
+        WorkManager.getInstance(application).enqueue(periodicWorkRequest)
     }
 
     private fun downloadBuild() {
@@ -180,8 +198,8 @@ class MainActivity : AppCompatActivity() {
 
         binding.progressIndicator.visibility = View.VISIBLE
         UpdateChecker().check(this, object: UpdateChecker.RequestResult {
-            override fun onResult(updateAvailable: Boolean, lastModified: String, remoteVersion: Long, resultCode: Int) {
-                if(updateAvailable && resultCode == 0) {
+            override fun onResult(updateAvailable: Int, lastModified: String, remoteVersion: Long, resultCode: Int) {
+                if(updateAvailable == UpdateChecker.UPDATE_AVAILABLE && resultCode == 0) {
                     binding.startButton.setOnClickListener{ downloadBuild() }
                     currentRemote = remoteVersion
                     binding.startButton.setText(R.string.action_update)
@@ -189,6 +207,7 @@ class MainActivity : AppCompatActivity() {
                 }else {
                     binding.updateAvaliable.text = "No Update Available"
                 }
+                binding.progressIndicator.visibility = View.INVISIBLE
             }
         }, 0)
 

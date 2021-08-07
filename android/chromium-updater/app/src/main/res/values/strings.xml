@@ -5,4 +5,7 @@
     <string name="action_update">Update Chromium</string>
     <string name="not_installed">Chromium is not installed</string>
     <string name="check_update">check for update</string>
+    <string name="channel_name">updates</string>
+    <string name="channel_description">updates</string>
+    <string name="not_title">Update available</string>
 </resources>
