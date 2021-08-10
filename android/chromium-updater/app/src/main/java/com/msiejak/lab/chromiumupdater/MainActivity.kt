@@ -30,10 +30,7 @@ import com.android.volley.toolbox.JsonObjectRequest
 import com.android.volley.toolbox.Volley
 import org.json.JSONException
 import android.content.Intent
-import androidx.work.Constraints
-import androidx.work.NetworkType
-import androidx.work.PeriodicWorkRequestBuilder
-import androidx.work.WorkManager
+import androidx.work.*
 import com.msiejak.lab.chromiumupdater.service.UpdateNotificationService
 import java.util.concurrent.TimeUnit
 
@@ -87,8 +84,8 @@ class MainActivity : AppCompatActivity() {
             .setRequiresBatteryNotLow(true)
             .setRequiredNetworkType(NetworkType.CONNECTED)
             .build()
-        val periodicWorkRequest = PeriodicWorkRequestBuilder<UpdateNotificationService>(40, TimeUnit.MINUTES).setConstraints(constraints).build()
-        WorkManager.getInstance(application).enqueue(periodicWorkRequest)
+        val periodicWorkRequest = PeriodicWorkRequest.Builder(UpdateNotificationService::class.java, 40, TimeUnit.MINUTES).setConstraints(constraints).build()
+        WorkManager.getInstance(application).enqueueUniquePeriodicWork("jobTag", ExistingPeriodicWorkPolicy.REPLACE, periodicWorkRequest)
     }
 
     private fun downloadBuild() {

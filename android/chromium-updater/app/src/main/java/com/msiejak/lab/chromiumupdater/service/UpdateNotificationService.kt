@@ -4,12 +4,15 @@ import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.Context
+import android.content.Context.MODE_PRIVATE
 import android.content.Context.NOTIFICATION_SERVICE
 import android.content.Intent
+import android.content.SharedPreferences
 import android.os.Build
 import android.os.Looper
 import android.util.Log
 import android.widget.Toast
+import androidx.annotation.RequiresApi
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.work.Worker
@@ -17,6 +20,9 @@ import androidx.work.WorkerParameters
 import com.msiejak.lab.chromiumupdater.MainActivity
 import com.msiejak.lab.chromiumupdater.R
 import com.msiejak.lab.chromiumupdater.UpdateChecker
+import java.time.Clock
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
 
 class UpdateNotificationService(context: Context, workerParams: WorkerParameters) : Worker(context, workerParams) {
     val c = applicationContext
@@ -65,10 +71,14 @@ class UpdateNotificationService(context: Context, workerParams: WorkerParameters
     }
 
 
+    @RequiresApi(Build.VERSION_CODES.O)
     override fun doWork(): Result {
         Looper.prepare()
         run()
         Log.e("TAG", "doWork: " )
+        val dtf: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss")
+        val now: LocalDateTime = LocalDateTime.now()
+        c.getSharedPreferences("update_check_log", MODE_PRIVATE).edit().putString(dtf.format(now), "checked").apply()
         return Result.success()
     }
 

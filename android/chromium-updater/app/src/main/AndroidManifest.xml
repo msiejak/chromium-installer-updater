@@ -20,14 +20,14 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.Be4">
-<!--        <provider-->
-<!--            android:name="androidx.work.impl.WorkManagerInitializer"-->
-<!--            android:authorities="${applicationId}.workmanager-init"-->
-<!--            android:directBootAware="true"-->
-<!--            android:exported="false"-->
-<!--            android:multiprocess="true"-->
-<!--            tools:node="remove"-->
-<!--            tools:targetApi="s" />-->
+        <provider
+            android:name="androidx.work.impl.WorkManagerInitializer"
+            android:authorities="${applicationId}.workmanager-init"
+            android:directBootAware="true"
+            android:exported="false"
+            android:multiprocess="true"
+            tools:node="remove"
+            tools:targetApi="s" />
         <provider
             android:name="androidx.core.content.FileProvider"
             android:authorities="${applicationId}.provider"
