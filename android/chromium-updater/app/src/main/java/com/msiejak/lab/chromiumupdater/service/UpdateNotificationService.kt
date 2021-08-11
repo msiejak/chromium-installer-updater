@@ -32,9 +32,7 @@ class UpdateNotificationService(context: Context, workerParams: WorkerParameters
         UpdateChecker().check(c, object: UpdateChecker.RequestResult {
             override fun onResult(updateAvailable: Int, lastModified: String, remoteVersion: Long, resultCode: Int) {
                 if(updateAvailable == UpdateChecker.UPDATE_AVAILABLE && resultCode == 1) {
-                    val intent = Intent(applicationContext, MainActivity::class.java).apply {
-                        flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-                    }
+                    val intent = Intent(applicationContext, MainActivity::class.java)
                     val pendingIntent: PendingIntent = PendingIntent.getActivity(applicationContext, 0, intent, PendingIntent.FLAG_IMMUTABLE)
                     val builder = NotificationCompat.Builder(applicationContext, "0")
                         .setSmallIcon(R.drawable.ic_baseline_update_24)

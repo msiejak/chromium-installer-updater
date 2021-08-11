@@ -37,7 +37,6 @@ import java.util.concurrent.TimeUnit
 
 class MainActivity : AppCompatActivity() {
     private lateinit var receiver: BroadcastReceiver
-    private lateinit var receiver2: BroadcastReceiver
     private lateinit var binding: ActivityMainBinding
     private var downloaded = false
     private var currentRemote: Long = 0
@@ -250,6 +249,5 @@ class MainActivity : AppCompatActivity() {
     override fun onDestroy() {
         super.onDestroy()
         unregisterReceiver(receiver)
-        unregisterReceiver(receiver2)
     }
 }
