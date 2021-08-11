@@ -2,14 +2,10 @@ package com.msiejak.lab.chromiumupdater
 
 import android.content.Context
 import android.util.Log
-import android.view.ContentInfo
-import android.view.View
-import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.android.volley.Request
 import com.android.volley.toolbox.JsonObjectRequest
 import com.android.volley.toolbox.Volley
-import org.json.JSONException
 
 class UpdateChecker {
 
@@ -28,18 +24,28 @@ class UpdateChecker {
         val jsonObjectRequest = JsonObjectRequest(Request.Method.GET, url, null, { response ->
             try {
                 val currentRemote = response.getString("content").toLong()
-                Log.i(currentRemote.toString(), "checkForUpdate: remote" )
-                Log.i(currentInstalled.toString(), "checkForUpdate: installed" )
-                if(currentRemote > currentInstalled) {
-                    callback.onResult(UPDATE_AVAILABLE, response.getString("last-modified"),currentRemote,  requestCode)
-                }else {
-                    callback.onResult(UPDATE_NOT_AVAILABLE, response.getString("last-modified"),currentRemote,  requestCode)
+                Log.i(currentRemote.toString(), "checkForUpdate: remote")
+                Log.i(currentInstalled.toString(), "checkForUpdate: installed")
+                if (currentRemote > currentInstalled) {
+                    callback.onResult(
+                        UPDATE_AVAILABLE,
+                        response.getString("last-modified"),
+                        currentRemote,
+                        requestCode
+                    )
+                } else {
+                    callback.onResult(
+                        UPDATE_NOT_AVAILABLE,
+                        response.getString("last-modified"),
+                        currentRemote,
+                        requestCode
+                    )
                 }
             } catch (e: Exception) {
-                callback.onResult(PARSE_ERROR,"null",0, requestCode)
+                callback.onResult(PARSE_ERROR, "null", 0, requestCode)
             }
         }) {
-            callback.onResult(NETWORK_ERROR,"null",0, requestCode)
+            callback.onResult(NETWORK_ERROR, "null", 0, requestCode)
         }
         jsonObjectRequest.setShouldCache(false)
         jsonObjectRequest.setShouldRetryConnectionErrors(true)
@@ -48,7 +54,12 @@ class UpdateChecker {
     }
 
     interface RequestResult {
-        fun onResult(updateAvailable: Int, lastModified: String, remoteVersion: Long, resultCode: Int)
+        fun onResult(
+            updateAvailable: Int,
+            lastModified: String,
+            remoteVersion: Long,
+            resultCode: Int
+        )
     }
 
 }

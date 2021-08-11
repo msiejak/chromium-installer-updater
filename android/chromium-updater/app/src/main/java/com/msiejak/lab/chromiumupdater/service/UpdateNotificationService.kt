@@ -7,7 +7,6 @@ import android.content.Context
 import android.content.Context.MODE_PRIVATE
 import android.content.Context.NOTIFICATION_SERVICE
 import android.content.Intent
-import android.content.SharedPreferences
 import android.os.Build
 import android.os.Looper
 import android.util.Log
@@ -20,20 +19,30 @@ import androidx.work.WorkerParameters
 import com.msiejak.lab.chromiumupdater.MainActivity
 import com.msiejak.lab.chromiumupdater.R
 import com.msiejak.lab.chromiumupdater.UpdateChecker
-import java.time.Clock
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 
-class UpdateNotificationService(context: Context, workerParams: WorkerParameters) : Worker(context, workerParams) {
+class UpdateNotificationService(context: Context, workerParams: WorkerParameters) :
+    Worker(context, workerParams) {
     val c = applicationContext
 
     private fun run() {
         Toast.makeText(c, "test", Toast.LENGTH_LONG).show()
-        UpdateChecker().check(c, object: UpdateChecker.RequestResult {
-            override fun onResult(updateAvailable: Int, lastModified: String, remoteVersion: Long, resultCode: Int) {
-                if(updateAvailable == UpdateChecker.UPDATE_AVAILABLE && resultCode == 1) {
+        UpdateChecker().check(c, object : UpdateChecker.RequestResult {
+            override fun onResult(
+                updateAvailable: Int,
+                lastModified: String,
+                remoteVersion: Long,
+                resultCode: Int
+            ) {
+                if (updateAvailable == UpdateChecker.UPDATE_AVAILABLE && resultCode == 1) {
                     val intent = Intent(applicationContext, MainActivity::class.java)
-                    val pendingIntent: PendingIntent = PendingIntent.getActivity(applicationContext, 0, intent, PendingIntent.FLAG_IMMUTABLE)
+                    val pendingIntent: PendingIntent = PendingIntent.getActivity(
+                        applicationContext,
+                        0,
+                        intent,
+                        PendingIntent.FLAG_IMMUTABLE
+                    )
                     val builder = NotificationCompat.Builder(applicationContext, "0")
                         .setSmallIcon(R.drawable.ic_baseline_update_24)
                         .setContentTitle(c.getString(R.string.not_title))
@@ -73,10 +82,11 @@ class UpdateNotificationService(context: Context, workerParams: WorkerParameters
     override fun doWork(): Result {
         Looper.prepare()
         run()
-        Log.e("TAG", "doWork: " )
+        Log.e("TAG", "doWork: ")
         val dtf: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss")
         val now: LocalDateTime = LocalDateTime.now()
-        c.getSharedPreferences("update_check_log", MODE_PRIVATE).edit().putString(dtf.format(now), "checked").apply()
+        c.getSharedPreferences("update_check_log", MODE_PRIVATE).edit()
+            .putString(dtf.format(now), "checked").apply()
         return Result.success()
     }
 

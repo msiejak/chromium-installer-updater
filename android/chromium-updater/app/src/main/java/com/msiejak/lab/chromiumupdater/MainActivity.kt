@@ -1,38 +1,28 @@
 package com.msiejak.lab.chromiumupdater
 
-import android.app.ActivityManager
 import android.app.AlarmManager
 import android.app.DownloadManager
 import android.app.PendingIntent
 import android.content.*
-import android.content.pm.PackageInfo
-import android.content.pm.PackageManager
+import android.net.ConnectivityManager
 import android.net.Uri
 import android.os.Bundle
-import android.util.Log
 import android.view.View
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.FileProvider
 import androidx.core.net.toUri
 import androidx.lifecycle.lifecycleScope
+import androidx.work.*
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.msiejak.lab.chromiumupdater.databinding.ActivityMainBinding
+import com.msiejak.lab.chromiumupdater.service.UpdateNotificationService
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import java.io.*
+import java.util.concurrent.TimeUnit
 import java.util.zip.ZipEntry
 import java.util.zip.ZipInputStream
-import android.net.ConnectivityManager
-import com.android.volley.Request
-import com.android.volley.RequestQueue
-import com.android.volley.toolbox.JsonObjectRequest
-import com.android.volley.toolbox.Volley
-import org.json.JSONException
-import android.content.Intent
-import androidx.work.*
-import com.msiejak.lab.chromiumupdater.service.UpdateNotificationService
-import java.util.concurrent.TimeUnit
 
 
 class MainActivity : AppCompatActivity() {
@@ -49,8 +39,10 @@ class MainActivity : AppCompatActivity() {
         val alarmManager =
             getSystemService(Context.ALARM_SERVICE) as? AlarmManager
         val pendingIntent =
-            PendingIntent.getService(this, 1, intent,
-                PendingIntent.FLAG_IMMUTABLE)
+            PendingIntent.getService(
+                this, 1, intent,
+                PendingIntent.FLAG_IMMUTABLE
+            )
         if (pendingIntent != null && alarmManager != null) {
             alarmManager.cancel(pendingIntent)
         }
@@ -58,14 +50,17 @@ class MainActivity : AppCompatActivity() {
         setChromiumVersionText()
         receiver = object : BroadcastReceiver() {
             override fun onReceive(context: Context?, intent: Intent?) {
-                unzip(File(externalCacheDir, "/chromium/chromium.zip"), File(externalCacheDir, "/chromium/extracted"))
+                unzip(
+                    File(externalCacheDir, "/chromium/chromium.zip"),
+                    File(externalCacheDir, "/chromium/extracted")
+                )
             }
         }
         registerReceiver(receiver, IntentFilter(DownloadManager.ACTION_DOWNLOAD_COMPLETE))
-        if(chromiumInstalled) {
-            binding.startButton.setOnClickListener{ checkForUpdate() }
-        }else {
-            binding.startButton.setOnClickListener{ downloadBuild() }
+        if (chromiumInstalled) {
+            binding.startButton.setOnClickListener { checkForUpdate() }
+        } else {
+            binding.startButton.setOnClickListener { downloadBuild() }
         }
         binding.topAppBar.setOnMenuItemClickListener { item ->
             when (item.itemId) {
@@ -73,7 +68,8 @@ class MainActivity : AppCompatActivity() {
                     setChromiumVersionText()
                     checkForUpdate()
                     true
-                }else -> true
+                }
+                else -> true
             }
         }
     }
@@ -83,13 +79,19 @@ class MainActivity : AppCompatActivity() {
             .setRequiresBatteryNotLow(true)
             .setRequiredNetworkType(NetworkType.CONNECTED)
             .build()
-        val periodicWorkRequest = PeriodicWorkRequest.Builder(UpdateNotificationService::class.java, 40, TimeUnit.MINUTES).setConstraints(constraints).build()
-        WorkManager.getInstance(application).enqueueUniquePeriodicWork("jobTag", ExistingPeriodicWorkPolicy.REPLACE, periodicWorkRequest)
+        val periodicWorkRequest =
+            PeriodicWorkRequest.Builder(UpdateNotificationService::class.java, 40, TimeUnit.MINUTES)
+                .setConstraints(constraints).build()
+        WorkManager.getInstance(application).enqueueUniquePeriodicWork(
+            "jobTag",
+            ExistingPeriodicWorkPolicy.REPLACE,
+            periodicWorkRequest
+        )
     }
 
     private fun downloadBuild() {
         val connectivityManager = getSystemService(CONNECTIVITY_SERVICE) as ConnectivityManager
-        if(connectivityManager.activeNetworkInfo != null && connectivityManager.activeNetworkInfo!!.isConnected) {
+        if (connectivityManager.activeNetworkInfo != null && connectivityManager.activeNetworkInfo!!.isConnected) {
 
             binding.progressIndicator.visibility = View.VISIBLE
             binding.startButton.isEnabled = false
@@ -107,7 +109,8 @@ class MainActivity : AppCompatActivity() {
             builder.setTitle("Network Error")
             builder.setCancelable(false)
             builder.setIcon(R.drawable.ic_baseline_error_outline_24)
-            builder.setPositiveButton("retry"
+            builder.setPositiveButton(
+                "retry"
             ) { _: DialogInterface?, _: Int ->
                 downloadBuild()
             }
@@ -117,50 +120,50 @@ class MainActivity : AppCompatActivity() {
     }
 
 
-
     @Throws(IOException::class)
     private fun unzip(zipFile: File?, targetDirectory: File?) {
         val zis = ZipInputStream(
             BufferedInputStream(FileInputStream(zipFile))
         )
         lifecycleScope.launch(Dispatchers.IO) {
-        try {
-            var ze: ZipEntry
-            var count: Int
-            val buffer = ByteArray(8192)
             try {
-                while (zis.nextEntry.also { ze = it } != null) {
-                    val file = File(targetDirectory, ze.name)
-                    val dir = if (ze.isDirectory) file else file.parentFile
-                    if (!dir.isDirectory && !dir.mkdirs()) throw FileNotFoundException(
-                        "Failed to ensure directory: " +
-                                dir.absolutePath
-                    )
-                    if (ze.isDirectory) continue
-                    val fout = FileOutputStream(file)
-                    try {
-                        while (zis.read(buffer).also { count = it } != -1) fout.write(
-                            buffer,
-                            0,
-                            count
+                var ze: ZipEntry
+                var count: Int
+                val buffer = ByteArray(8192)
+                try {
+                    while (zis.nextEntry.also { ze = it } != null) {
+                        val file = File(targetDirectory, ze.name)
+                        val dir = if (ze.isDirectory) file else file.parentFile
+                        if (!dir.isDirectory && !dir.mkdirs()) throw FileNotFoundException(
+                            "Failed to ensure directory: " +
+                                    dir.absolutePath
                         )
-                    } finally {
-                        fout.close()
+                        if (ze.isDirectory) continue
+                        val fout = FileOutputStream(file)
+                        try {
+                            while (zis.read(buffer).also { count = it } != -1) fout.write(
+                                buffer,
+                                0,
+                                count
+                            )
+                        } finally {
+                            fout.close()
+                        }
                     }
+                } catch (e: Exception) {
+                    e.printStackTrace()
                 }
-            } catch (e: Exception) {
-                e.printStackTrace()
-            }
-        } finally {
-            zis.close()
-            runOnUiThread {
-                binding.progressIndicator.visibility = View.GONE
-                binding.startButton.isEnabled = true
-                install() }
-            downloaded = true
+            } finally {
+                zis.close()
+                runOnUiThread {
+                    binding.progressIndicator.visibility = View.GONE
+                    binding.startButton.isEnabled = true
+                    install()
+                }
+                downloaded = true
 
+            }
         }
-    }
     }
 
     private fun checkForUpdate() {
@@ -193,14 +196,20 @@ class MainActivity : AppCompatActivity() {
 //        queue.start()
 
         binding.progressIndicator.visibility = View.VISIBLE
-        UpdateChecker().check(this, object: UpdateChecker.RequestResult {
-            override fun onResult(updateAvailable: Int, lastModified: String, remoteVersion: Long, resultCode: Int) {
-                if(updateAvailable == UpdateChecker.UPDATE_AVAILABLE && resultCode == 0) {
-                    binding.startButton.setOnClickListener{ downloadBuild() }
+        UpdateChecker().check(this, object : UpdateChecker.RequestResult {
+            override fun onResult(
+                updateAvailable: Int,
+                lastModified: String,
+                remoteVersion: Long,
+                resultCode: Int
+            ) {
+                if (updateAvailable == UpdateChecker.UPDATE_AVAILABLE && resultCode == 0) {
+                    binding.startButton.setOnClickListener { downloadBuild() }
                     currentRemote = remoteVersion
                     binding.startButton.setText(R.string.action_update)
-                    binding.updateAvaliable.text = "Update Available\nNewest Version available was built at $lastModified"
-                }else {
+                    binding.updateAvaliable.text =
+                        "Update Available\nNewest Version available was built at $lastModified"
+                } else {
                     binding.updateAvaliable.text = "No Update Available"
                 }
                 binding.progressIndicator.visibility = View.INVISIBLE
@@ -222,13 +231,14 @@ class MainActivity : AppCompatActivity() {
         install.putExtra(Intent.EXTRA_NOT_UNKNOWN_SOURCE, true)
         install.data = uri
         startActivity(install)
-        getSharedPreferences("shared_prefs", MODE_PRIVATE).edit().putLong("build", currentRemote).apply()
+        getSharedPreferences("shared_prefs", MODE_PRIVATE).edit().putLong("build", currentRemote)
+            .apply()
         setChromiumVersionText()
         reset()
     }
 
     private fun reset() {
-        binding.startButton.setOnClickListener{ checkForUpdate() }
+        binding.startButton.setOnClickListener { checkForUpdate() }
         binding.updateAvaliable.text = ""
     }
 
@@ -239,7 +249,7 @@ class MainActivity : AppCompatActivity() {
             txt = "Installed Chromium Version: ${packageInfo.versionName}"
             binding.startButton.setText(R.string.check_update)
             chromiumInstalled = true
-        }catch(e: Exception){
+        } catch (e: Exception) {
             e.printStackTrace()
             binding.startButton.setText(R.string.action_install)
         }
