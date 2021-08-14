@@ -27,7 +27,6 @@ class UpdateNotificationService(context: Context, workerParams: WorkerParameters
     val c = applicationContext
 
     private fun run() {
-        Toast.makeText(c, "test", Toast.LENGTH_LONG).show()
         UpdateChecker().check(c, object : UpdateChecker.RequestResult {
             override fun onResult(
                 updateAvailable: Int,
@@ -82,7 +81,6 @@ class UpdateNotificationService(context: Context, workerParams: WorkerParameters
     override fun doWork(): Result {
         Looper.prepare()
         run()
-        Log.e("TAG", "doWork: ")
         val dtf: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss")
         val now: LocalDateTime = LocalDateTime.now()
         c.getSharedPreferences("update_check_log", MODE_PRIVATE).edit()
