@@ -11,8 +11,8 @@ android {
         applicationId "com.msiejak.lab.chromiumupdater"
         minSdkVersion 23
         targetSdkVersion 31
-        versionCode 2
-        versionName "0.1 Beta"
+        versionCode 3
+        versionName "0.2 Beta"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
 
