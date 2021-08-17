@@ -16,7 +16,7 @@ class UpdateChecker {
         const val NETWORK_ERROR = 4
     }
 
-    fun check(c: Context, callback: RequestResult, requestCode: Int) {
+    fun check(c: Context, requestCode: Int, onResultCallback: (updateAvailable: Int, lastModified: String, remoteVersion: Long, resultCode: Int) -> Unit) {
         val queue = Volley.newRequestQueue(c)
         val s = c.getSharedPreferences("shared_prefs", AppCompatActivity.MODE_PRIVATE)
         val currentInstalled = s.getLong("build", 0)
@@ -27,39 +27,22 @@ class UpdateChecker {
                 Log.i(currentRemote.toString(), "checkForUpdate: remote")
                 Log.i(currentInstalled.toString(), "checkForUpdate: installed")
                 if (currentRemote > currentInstalled) {
-                    callback.onResult(
-                        UPDATE_AVAILABLE,
-                        response.getString("last-modified"),
-                        currentRemote,
-                        requestCode
-                    )
+                    onResultCallback(UPDATE_AVAILABLE, response.getString("last-modified"), currentRemote, requestCode)
                 } else {
-                    callback.onResult(
-                        UPDATE_NOT_AVAILABLE,
-                        response.getString("last-modified"),
-                        currentRemote,
-                        requestCode
+                    onResultCallback(
+                        UPDATE_NOT_AVAILABLE, response.getString("last-modified"), currentRemote, requestCode
                     )
                 }
             } catch (e: Exception) {
-                callback.onResult(PARSE_ERROR, "null", 0, requestCode)
+                onResultCallback(PARSE_ERROR, "null", 0, requestCode)
             }
         }) {
-            callback.onResult(NETWORK_ERROR, "null", 0, requestCode)
+            onResultCallback(NETWORK_ERROR, "null", 0, requestCode)
         }
         jsonObjectRequest.setShouldCache(false)
         jsonObjectRequest.setShouldRetryConnectionErrors(true)
         queue.add(jsonObjectRequest)
         queue.start()
-    }
-
-    interface RequestResult {
-        fun onResult(
-            updateAvailable: Int,
-            lastModified: String,
-            remoteVersion: Long,
-            resultCode: Int
-        )
     }
 
 }

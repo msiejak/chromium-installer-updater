@@ -9,7 +9,6 @@ import android.content.Context.NOTIFICATION_SERVICE
 import android.content.Intent
 import android.os.Build
 import android.os.Looper
-import androidx.annotation.RequiresApi
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.work.Worker
@@ -22,16 +21,10 @@ import java.time.format.DateTimeFormatter
 
 class UpdateNotificationService(context: Context, workerParams: WorkerParameters) :
     Worker(context, workerParams) {
-    val c = applicationContext
+    private val c = applicationContext
 
     private fun run() {
-        UpdateChecker().check(c, object : UpdateChecker.RequestResult {
-            override fun onResult(
-                updateAvailable: Int,
-                lastModified: String,
-                remoteVersion: Long,
-                resultCode: Int
-            ) {
+        UpdateChecker().check(c, 1) { updateAvailable, _, _, resultCode ->
                 if (updateAvailable == UpdateChecker.UPDATE_AVAILABLE && resultCode == 1) {
                     val intent = Intent(applicationContext, MainActivity::class.java)
                     val pendingIntent: PendingIntent = PendingIntent.getActivity(
@@ -54,7 +47,6 @@ class UpdateNotificationService(context: Context, workerParams: WorkerParameters
                     }
                 }
             }
-        }, 1)
     }
 
     private fun createNotificationChannel() {
@@ -75,14 +67,15 @@ class UpdateNotificationService(context: Context, workerParams: WorkerParameters
     }
 
 
-    @RequiresApi(Build.VERSION_CODES.O)
     override fun doWork(): Result {
         Looper.prepare()
         run()
-        val dtf: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss")
-        val now: LocalDateTime = LocalDateTime.now()
-        c.getSharedPreferences("update_check_log", MODE_PRIVATE).edit()
-            .putString(dtf.format(now), "checked").apply()
+        if (Build.VERSION.SDK_INT == 26) {
+            val dtf: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss")
+            val now: LocalDateTime = LocalDateTime.now()
+            c.getSharedPreferences("update_check_log", MODE_PRIVATE).edit()
+                .putString(dtf.format(now), "checked").apply()
+        }
         return Result.success()
     }
 
