@@ -8,4 +8,5 @@
     <string name="channel_name">updates</string>
     <string name="channel_description">updates</string>
     <string name="not_title">Update available</string>
+    <string name="no_update">No Update Available</string>
 </resources>

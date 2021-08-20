@@ -176,7 +176,7 @@ class MainActivity : AppCompatActivity() {
                 binding.updateAvaliable.text =
                     "Update Available\nNewest Version available was built at $lastModified"
             } else {
-                binding.updateAvaliable.text = "No Update Available"
+                binding.updateAvaliable.text = getString(R.string.no_update)
             }
             binding.progressIndicator.visibility = View.INVISIBLE
         }
