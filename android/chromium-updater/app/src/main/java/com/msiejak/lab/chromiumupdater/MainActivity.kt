@@ -28,7 +28,6 @@ import java.util.zip.ZipInputStream
 class MainActivity : AppCompatActivity() {
     private lateinit var receiver: BroadcastReceiver
     private lateinit var binding: ActivityMainBinding
-    private var downloaded = false
     private var currentRemote: Long = 0
     private var chromiumInstalled = false
 
@@ -160,7 +159,6 @@ class MainActivity : AppCompatActivity() {
                     binding.startButton.isEnabled = true
                     install()
                 }
-                downloaded = true
 
             }
         }
