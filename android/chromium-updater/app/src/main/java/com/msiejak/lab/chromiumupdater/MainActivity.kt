@@ -3,7 +3,11 @@ package com.msiejak.lab.chromiumupdater
 import android.app.AlarmManager
 import android.app.DownloadManager
 import android.app.PendingIntent
-import android.content.*
+import android.content.BroadcastReceiver
+import android.content.Context
+import android.content.DialogInterface
+import android.content.Intent
+import android.content.IntentFilter
 import android.net.ConnectivityManager
 import android.net.Uri
 import android.os.Bundle
@@ -13,13 +17,22 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.FileProvider
 import androidx.core.net.toUri
 import androidx.lifecycle.lifecycleScope
-import androidx.work.*
+import androidx.work.Constraints
+import androidx.work.ExistingPeriodicWorkPolicy
+import androidx.work.NetworkType
+import androidx.work.PeriodicWorkRequest
+import androidx.work.WorkManager
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.msiejak.lab.chromiumupdater.databinding.ActivityMainBinding
 import com.msiejak.lab.chromiumupdater.service.UpdateNotificationService
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import java.io.*
+import java.io.BufferedInputStream
+import java.io.File
+import java.io.FileInputStream
+import java.io.FileNotFoundException
+import java.io.FileOutputStream
+import java.io.IOException
 import java.util.concurrent.TimeUnit
 import java.util.zip.ZipEntry
 import java.util.zip.ZipInputStream
@@ -166,16 +179,19 @@ class MainActivity : AppCompatActivity() {
 
     private fun checkForUpdate() {
         binding.progressIndicator.visibility = View.VISIBLE
-        UpdateChecker().check(this, 0) { updateAvailable, lastModified, remoteVersion, resultCode ->
-            if (updateAvailable == UpdateChecker.UPDATE_AVAILABLE && resultCode == 0) {
+
+        UpdateChecker().check(this) { result ->
+            // Currently, only UpdateCheckerResult.Success is used.
+            if (result is UpdateCheckerResult.Success && result.isNewVersion) {
                 binding.startButton.setOnClickListener { downloadBuild() }
-                currentRemote = remoteVersion
+                this.currentRemote = result.latestVersion
+
                 binding.startButton.setText(R.string.action_update)
-                binding.updateAvaliable.text =
-                    "Update Available\nNewest Version available was built at $lastModified"
+                binding.updateAvaliable.text = "Update Available\nNewest Version available was built at ${result.lastModified}"
             } else {
                 binding.updateAvaliable.text = getString(R.string.no_update)
             }
+
             binding.progressIndicator.visibility = View.INVISIBLE
         }
     }

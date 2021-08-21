@@ -16,6 +16,7 @@ import androidx.work.WorkerParameters
 import com.msiejak.lab.chromiumupdater.MainActivity
 import com.msiejak.lab.chromiumupdater.R
 import com.msiejak.lab.chromiumupdater.UpdateChecker
+import com.msiejak.lab.chromiumupdater.UpdateCheckerResult
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 
@@ -24,29 +25,30 @@ class UpdateNotificationService(context: Context, workerParams: WorkerParameters
     private val c = applicationContext
 
     private fun run() {
-        UpdateChecker().check(c, 1) { updateAvailable, _, _, resultCode ->
-                if (updateAvailable == UpdateChecker.UPDATE_AVAILABLE && resultCode == 1) {
-                    val intent = Intent(applicationContext, MainActivity::class.java)
-                    val pendingIntent: PendingIntent = PendingIntent.getActivity(
-                        applicationContext,
-                        0,
-                        intent,
-                        PendingIntent.FLAG_IMMUTABLE
-                    )
-                    val builder = NotificationCompat.Builder(applicationContext, "0")
-                        .setSmallIcon(R.drawable.ic_baseline_update_24)
-                        .setContentTitle(c.getString(R.string.not_title))
-                        .setContentText("An update for chromium is available")
-                        .setPriority(NotificationCompat.PRIORITY_DEFAULT)
-                        .setAutoCancel(true)
-                        .setContentIntent(pendingIntent)
-                    createNotificationChannel()
-                    with(NotificationManagerCompat.from(applicationContext)) {
-                        // notificationId is a unique int for each notification that you must define
-                        notify(0, builder.build())
-                    }
+        UpdateChecker().check(c) { result ->
+            // Currently, only UpdateCheckerResult.Success is used.
+            if (result is UpdateCheckerResult.Success && result.isNewVersion) {
+                val intent = Intent(applicationContext, MainActivity::class.java)
+                val pendingIntent: PendingIntent = PendingIntent.getActivity(
+                    applicationContext,
+                    0,
+                    intent,
+                    PendingIntent.FLAG_IMMUTABLE
+                )
+                val builder = NotificationCompat.Builder(applicationContext, "0")
+                    .setSmallIcon(R.drawable.ic_baseline_update_24)
+                    .setContentTitle(c.getString(R.string.not_title))
+                    .setContentText("An update for chromium is available")
+                    .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+                    .setAutoCancel(true)
+                    .setContentIntent(pendingIntent)
+                createNotificationChannel()
+                with(NotificationManagerCompat.from(applicationContext)) {
+                    // notificationId is a unique int for each notification that you must define
+                    notify(0, builder.build())
                 }
             }
+        }
     }
 
     private fun createNotificationChannel() {
