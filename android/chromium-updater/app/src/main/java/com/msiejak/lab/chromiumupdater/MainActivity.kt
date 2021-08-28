@@ -95,7 +95,7 @@ class MainActivity : AppCompatActivity() {
             PeriodicWorkRequest.Builder(UpdateNotificationService::class.java, 40, TimeUnit.MINUTES)
                 .setConstraints(constraints).build()
         WorkManager.getInstance(application).enqueueUniquePeriodicWork(
-            "jobTag",
+            "updateCheck",
             ExistingPeriodicWorkPolicy.REPLACE,
             periodicWorkRequest
         )
