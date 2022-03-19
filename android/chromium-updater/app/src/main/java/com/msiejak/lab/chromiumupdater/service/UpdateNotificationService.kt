@@ -72,7 +72,7 @@ class UpdateNotificationService(context: Context, workerParams: WorkerParameters
     override fun doWork(): Result {
         Looper.prepare()
         run()
-        if (Build.VERSION.SDK_INT == 26) {
+        if (Build.VERSION.SDK_INT >= 26) {
             val dtf: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss")
             val now: LocalDateTime = LocalDateTime.now()
             c.getSharedPreferences("update_check_log", MODE_PRIVATE).edit()

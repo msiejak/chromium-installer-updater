@@ -4,15 +4,14 @@ plugins {
 }
 
 android {
-    compileSdkVersion 32
-    buildToolsVersion "32.1.0-rc1"
+    compileSdkPreview "Tiramisu"
 
     defaultConfig {
         applicationId "com.msiejak.lab.chromiumupdater"
         minSdkVersion 23
-        targetSdkVersion 32
-        versionCode 4
-        versionName "0.5 Beta"
+        targetSdkPreview "Tiramisu"
+        versionCode 5
+        versionName "0.4 Beta"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
 
@@ -48,7 +47,6 @@ android {
         jvmTarget = "11"
         useIR = true
     }
-    namespace 'com.msiejak.lab.chromiumupdater'
 }
 
 dependencies {
