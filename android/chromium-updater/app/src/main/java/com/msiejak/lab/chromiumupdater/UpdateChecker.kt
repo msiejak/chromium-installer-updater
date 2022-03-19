@@ -37,6 +37,27 @@ class UpdateChecker {
         queue.start()
     }
 
+    fun getLatestVersion(context: Context, onResult: (result: UpdateCheckerResult) -> Unit) {
+        val queue = Volley.newRequestQueue(context)
+        val request = JsonObjectRequest(VERSION_URL, null, { response ->
+            try {
+                val remoteVersion = response.getString("content").toLong()
+                Log.i(TAG, "Remote: $remoteVersion")
+                onResult(UpdateCheckerResult.Success(false, remoteVersion, "null"))
+            } catch (e: Exception) {
+                onResult(UpdateCheckerResult.Error(ErrorType.PARSING))
+            }
+        }, {
+            onResult(UpdateCheckerResult.Error(ErrorType.NETWORK))
+        }).apply {
+            setShouldCache(false)
+            setShouldRetryConnectionErrors(true)
+        }
+
+        queue.add(request)
+        queue.start()
+    }
+
 
     companion object {
         private const val TAG = "UpdateChecker"

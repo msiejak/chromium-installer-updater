@@ -27,10 +27,8 @@ import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.msiejak.lab.chromiumupdater.databinding.ActivityMainBinding
 import com.msiejak.lab.chromiumupdater.service.UpdateNotificationService
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import java.io.*
-import java.lang.Thread.sleep
 import java.util.concurrent.TimeUnit
 import java.util.zip.ZipEntry
 import java.util.zip.ZipInputStream
@@ -88,6 +86,9 @@ class MainActivity : AppCompatActivity() {
                 }
                 else -> true
             }
+        }
+        if(chromiumInstalled) {
+            checkForUpdate()
         }
     }
 
@@ -242,7 +243,9 @@ class MainActivity : AppCompatActivity() {
                 binding.startButton.setText(R.string.action_update)
                 binding.updateAvaliable.text = "Update Available\nNewest Version available was built at ${result.lastModified}"
             } else {
-                binding.updateAvaliable.text = getString(R.string.no_update)
+                if(chromiumInstalled) {
+                    binding.updateAvaliable.text = getString(R.string.no_update)
+                }
             }
 
             binding.progressIndicator.visibility = View.INVISIBLE
@@ -261,14 +264,25 @@ class MainActivity : AppCompatActivity() {
         install.putExtra(Intent.EXTRA_NOT_UNKNOWN_SOURCE, true)
         install.data = uri
         startActivity(install)
-        getSharedPreferences("shared_prefs", MODE_PRIVATE).edit().putLong("build", currentRemote)
-            .apply()
-        setChromiumVersionText()
-        reset()
+        UpdateChecker().getLatestVersion(this) { result ->
+            if (result is UpdateCheckerResult.Success) {
+                this.currentRemote = result.latestVersion
+                getSharedPreferences("shared_prefs", MODE_PRIVATE).edit()
+                    .putLong("build", this.currentRemote)
+                    .apply()
+                Toast.makeText(
+                    this,
+                    "Chromium Installed: ${this.currentRemote}",
+                    Toast.LENGTH_SHORT
+                ).show()
+                setChromiumVersionText()
+                reset()
+            }
+        }
     }
 
     private fun reset() {
-        binding.startButton.setOnClickListener { checkForUpdate() }
+        if(chromiumInstalled) binding.startButton.setOnClickListener { checkForUpdate() }
         binding.updateAvaliable.text = ""
     }
 
@@ -289,5 +303,22 @@ class MainActivity : AppCompatActivity() {
     override fun onDestroy() {
         super.onDestroy()
         unregisterReceiver(receiver)
+    }
+
+
+    override fun onRestart() {
+        super.onRestart()
+        val notificationManager = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
+        notificationManager.cancelAll()
+        setChromiumVersionText()
+        if (chromiumInstalled) {
+            binding.startButton.setOnClickListener { checkForUpdate() }
+        } else {
+            binding.startButton.setOnClickListener { downloadBuild() }
+        }
+        reset()
+        if(chromiumInstalled) {
+            checkForUpdate()
+        }
     }
 }

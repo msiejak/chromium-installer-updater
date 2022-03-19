@@ -38,7 +38,7 @@ class UpdateNotificationService(context: Context, workerParams: WorkerParameters
                 val builder = NotificationCompat.Builder(applicationContext, "0")
                     .setSmallIcon(R.drawable.ic_baseline_update_24)
                     .setContentTitle(c.getString(R.string.not_title))
-                    .setContentText("An update for chromium is available")
+                    .setContentText("An update for Chromium is available")
                     .setPriority(NotificationCompat.PRIORITY_DEFAULT)
                     .setAutoCancel(true)
                     .setContentIntent(pendingIntent)
