@@ -39,6 +39,24 @@ class MainActivity : AppCompatActivity() {
     private lateinit var binding: ActivityMainBinding
     private var currentRemote: Long = 0
     private var chromiumInstalled = false
+    private val requestPermissionLauncher =
+        registerForActivityResult(
+            ActivityResultContracts.RequestPermission()
+        ) { isGranted: Boolean ->
+            if (isGranted) {
+                Toast.makeText(
+                    this@MainActivity,
+                    "Permission granted",
+                    Toast.LENGTH_SHORT
+                ).show()
+            } else {
+                Toast.makeText(
+                    this@MainActivity,
+                    "Permission denied. You will not be notified about new updates",
+                    Toast.LENGTH_LONG
+                ).show()
+            }
+        }
 
     @SuppressLint("NewApi")
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -46,11 +64,11 @@ class MainActivity : AppCompatActivity() {
         DynamicColors.applyIfAvailable(this)
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
-        val notificationManager = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
-        notificationManager.cancelAll()
         if(!checkNotPermission()) {
             requestNotPermission()
         }
+        val notificationManager = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
+        notificationManager.cancelAll()
         val alarmManager =
             getSystemService(Context.ALARM_SERVICE) as? AlarmManager
         val pendingIntent =
@@ -80,47 +98,33 @@ class MainActivity : AppCompatActivity() {
         binding.topAppBar.setOnMenuItemClickListener { item ->
             when (item.itemId) {
                 R.id.refresh -> {
-                    setChromiumVersionText()
-                    checkForUpdate()
+                    refreshAll()
                     true
                 }
                 else -> true
             }
         }
         if(chromiumInstalled) {
+            binding.uninstallButton.isEnabled = true
+            binding.uninstallButton.setOnClickListener { uninstall() }
             checkForUpdate()
+        }
+        binding.uninstallButton.setOnClickListener {
+            uninstall()
         }
     }
 
     private fun checkNotPermission(): Boolean {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            return ContextCompat.checkSelfPermission(
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU || "Tiramisu".equals(Build.VERSION.CODENAME)) {
+            ContextCompat.checkSelfPermission(
                 this@MainActivity,
                 Manifest.permission.POST_NOTIFICATIONS
             ) == PackageManager.PERMISSION_GRANTED
-        }else return true
+        }else true
     }
 
-    @RequiresApi(Build.VERSION_CODES.TIRAMISU)
+    @SuppressLint("InlinedApi")
     private fun requestNotPermission() {
-        val requestPermissionLauncher =
-            registerForActivityResult(
-                ActivityResultContracts.RequestPermission()
-            ) { isGranted: Boolean ->
-                if (isGranted) {
-                    Toast.makeText(
-                        this@MainActivity,
-                        "Permission granted",
-                        Toast.LENGTH_SHORT
-                    ).show()
-                } else {
-                    Toast.makeText(
-                        this@MainActivity,
-                        "Permission denied. You will not be notified about new updates",
-                        Toast.LENGTH_LONG
-                    ).show()
-                }
-            }
         MaterialAlertDialogBuilder(this@MainActivity)
             .setTitle("Permissions Needed")
             .setMessage("In order to be notified about new Chromium builds, you need to grant permission to send notifications")
@@ -270,11 +274,6 @@ class MainActivity : AppCompatActivity() {
                 getSharedPreferences("shared_prefs", MODE_PRIVATE).edit()
                     .putLong("build", this.currentRemote)
                     .apply()
-                Toast.makeText(
-                    this,
-                    "Chromium Installed: ${this.currentRemote}",
-                    Toast.LENGTH_SHORT
-                ).show()
                 setChromiumVersionText()
                 reset()
             }
@@ -286,6 +285,12 @@ class MainActivity : AppCompatActivity() {
         binding.updateAvaliable.text = ""
     }
 
+    private fun uninstall() {
+        val intent = Intent(Intent.ACTION_DELETE)
+        intent.data = Uri.parse("package:org.chromium.chrome")
+        startActivity(intent)
+    }
+
     private fun setChromiumVersionText() {
         var txt = getString(R.string.not_installed)
         try {
@@ -294,10 +299,23 @@ class MainActivity : AppCompatActivity() {
             binding.startButton.setText(R.string.check_update)
             chromiumInstalled = true
         } catch (e: Exception) {
+            chromiumInstalled = false
             e.printStackTrace()
             binding.startButton.setText(R.string.action_install)
         }
         binding.versionName.text = txt
+    }
+
+    private fun refreshAll() {
+        setChromiumVersionText()
+        reset()
+        if(chromiumInstalled) {
+            binding.uninstallButton.isEnabled = true
+            checkForUpdate()
+        }else {
+            binding.uninstallButton.isEnabled = false
+            binding.startButton.setOnClickListener { downloadBuild() }
+        }
     }
 
     override fun onDestroy() {
@@ -310,15 +328,6 @@ class MainActivity : AppCompatActivity() {
         super.onRestart()
         val notificationManager = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
         notificationManager.cancelAll()
-        setChromiumVersionText()
-        if (chromiumInstalled) {
-            binding.startButton.setOnClickListener { checkForUpdate() }
-        } else {
-            binding.startButton.setOnClickListener { downloadBuild() }
-        }
-        reset()
-        if(chromiumInstalled) {
-            checkForUpdate()
-        }
+        refreshAll()
     }
 }

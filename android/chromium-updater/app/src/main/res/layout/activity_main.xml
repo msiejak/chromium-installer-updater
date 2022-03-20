@@ -62,10 +62,23 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:layout_gravity="bottom"
+            android:orientation="vertical"
             android:gravity="bottom">
 
             <Button
                 android:id="@+id/startButton"
+                app:icon="@drawable/ic_outline_get_app_24"
+                android:layout_width="match_parent"
+                app:iconSize="24dp"
+                android:layout_height="wrap_content" />
+
+            <Button
+                android:id="@+id/uninstallButton"
+                style="Theme.Be4.uninstallButton"
+                android:enabled="false"
+                app:iconSize="24dp"
+                app:icon="@drawable/ic_delete"
+                android:text="@string/action_uninstall"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content" />
 
