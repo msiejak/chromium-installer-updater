@@ -56,6 +56,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="20dp"
+
             android:textSize="18sp" />
 
         <LinearLayout
@@ -72,15 +73,39 @@
                 app:iconSize="24dp"
                 android:layout_height="wrap_content" />
 
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:weightSum="1"
+                android:layout_gravity="center"
+                android:gravity="center"
+                android:orientation="horizontal">
+
             <Button
                 android:id="@+id/uninstallButton"
                 style="Theme.Be4.uninstallButton"
                 android:enabled="false"
                 app:iconSize="24dp"
+                android:layout_marginRight="3dp"
+                android:layout_weight=".5"
                 app:icon="@drawable/ic_delete"
                 android:text="@string/action_uninstall"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content" />
+
+            <Button
+                android:id="@+id/openButton"
+                style="Theme.Be4.uninstallButton"
+                android:enabled="false"
+                app:iconSize="24dp"
+                android:layout_marginLeft="3dp"
+                android:layout_weight=".5"
+                app:icon="@drawable/ic_outline_info_24"
+                android:text="@string/action_open"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent" />
+
+            </LinearLayout>
 
         </LinearLayout>
 

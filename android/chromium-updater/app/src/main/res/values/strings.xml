@@ -12,4 +12,5 @@
     <string name="auto_update">Auto update in background\'</string>
     <string name="action_postinstall">Refresh</string>
     <string name="action_uninstall">Uninstall Chromium</string>
+    <string name="action_open">App Info</string>
 </resources>

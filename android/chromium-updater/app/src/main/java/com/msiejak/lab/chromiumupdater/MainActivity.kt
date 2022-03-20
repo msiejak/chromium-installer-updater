@@ -12,10 +12,10 @@ import android.net.ConnectivityManager
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
+import android.provider.Settings
 import android.view.View
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
@@ -106,11 +106,14 @@ class MainActivity : AppCompatActivity() {
         }
         if(chromiumInstalled) {
             binding.uninstallButton.isEnabled = true
-            binding.uninstallButton.setOnClickListener { uninstall() }
+            binding.openButton.isEnabled = true
             checkForUpdate()
         }
         binding.uninstallButton.setOnClickListener {
             uninstall()
+        }
+        binding.openButton.setOnClickListener {
+            appInfo()
         }
     }
 
@@ -311,11 +314,25 @@ class MainActivity : AppCompatActivity() {
         reset()
         if(chromiumInstalled) {
             binding.uninstallButton.isEnabled = true
+            binding.openButton.isEnabled = true
             checkForUpdate()
         }else {
             binding.uninstallButton.isEnabled = false
+            binding.openButton.isEnabled = false
             binding.startButton.setOnClickListener { downloadBuild() }
         }
+    }
+
+    private fun openChromium() {
+//        val i = Intent(ACTION_VIEW, Uri.parse("https://chromium.org"))
+//        i.setClassName("org.chromium.chrome", "com.google.android.apps.chrome.Main")
+//        startActivity(i)
+    }
+
+    private fun appInfo() {
+        val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
+        intent.data = Uri.parse("package:org.chromium.chrome")
+        startActivity(intent)
     }
 
     override fun onDestroy() {
