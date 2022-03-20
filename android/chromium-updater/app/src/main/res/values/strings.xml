@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">Chromium Downloader</string>
+    <string name="app_name">Chromium Manager</string>
     <string name="des">This app will install or update to the latest version of the Chromium browser for Android.</string>
     <string name="action_install">Install Chromium</string>
     <string name="action_update">Update Chromium</string>
