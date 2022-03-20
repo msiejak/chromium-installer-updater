@@ -44,7 +44,6 @@ class UpdateNotificationService(context: Context, workerParams: WorkerParameters
                     .setContentIntent(pendingIntent)
                 createNotificationChannel()
                 with(NotificationManagerCompat.from(applicationContext)) {
-                    // notificationId is a unique int for each notification that you must define
                     notify(0, builder.build())
                 }
             }
@@ -52,8 +51,6 @@ class UpdateNotificationService(context: Context, workerParams: WorkerParameters
     }
 
     private fun createNotificationChannel() {
-        // Create the NotificationChannel, but only on API 26+ because
-        // the NotificationChannel class is new and not in the support library
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val name = c.getString(R.string.channel_name)
             val descriptionText = c.getString(R.string.channel_description)

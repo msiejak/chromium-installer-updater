@@ -9,7 +9,8 @@
     <string name="channel_description">updates</string>
     <string name="not_title">Update available</string>
     <string name="no_update">No Update Available</string>
-    <string name="auto_update">Auto update in background\'</string>
+    <string name="auto_update">Auto update in background</string>
+    <string name="update_check">Check for updates in the background</string>
     <string name="action_postinstall">Refresh</string>
     <string name="action_uninstall">Uninstall Chromium</string>
     <string name="action_open">App Info</string>

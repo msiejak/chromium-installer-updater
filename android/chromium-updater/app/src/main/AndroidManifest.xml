@@ -28,7 +28,7 @@
             android:exported="false"
             android:multiprocess="true"
             tools:node="remove"
-            tools:targetApi="s" />
+            tools:targetApi="sv2" />
         <provider
             android:name="androidx.core.content.FileProvider"
             android:authorities="${applicationId}.provider"
@@ -47,6 +47,10 @@
 
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+        </activity>
+        <activity
+            android:name=".SettingsActivity"
+            android:exported="true">
         </activity>
     </application>
 

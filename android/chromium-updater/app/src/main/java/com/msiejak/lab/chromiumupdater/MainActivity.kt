@@ -79,7 +79,11 @@ class MainActivity : AppCompatActivity() {
         if (pendingIntent != null && alarmManager != null) {
             alarmManager.cancel(pendingIntent)
         }
-        startService()
+        if(getSharedPreferences("shared_prefs", MODE_PRIVATE).getBoolean("bkd_check_enabled", true)) {
+            startService()
+        }else {
+            WorkManager.getInstance(this@MainActivity).cancelAllWork()
+        }
         setChromiumVersionText()
         receiver = object : BroadcastReceiver() {
             override fun onReceive(context: Context?, intent: Intent?) {
@@ -99,6 +103,10 @@ class MainActivity : AppCompatActivity() {
             when (item.itemId) {
                 R.id.refresh -> {
                     refreshAll()
+                    true
+                }
+                R.id.settings -> {
+                    startActivity(Intent(this@MainActivity, SettingsActivity::class.java))
                     true
                 }
                 else -> true
@@ -152,7 +160,7 @@ class MainActivity : AppCompatActivity() {
             .setRequiredNetworkType(NetworkType.CONNECTED)
             .build()
         val periodicWorkRequest =
-            PeriodicWorkRequest.Builder(UpdateNotificationService::class.java, 15, TimeUnit.MINUTES)
+            PeriodicWorkRequest.Builder(UpdateNotificationService::class.java, getSharedPreferences("shared_prefs", MODE_PRIVATE).getFloat("bkd_check_interval", 30F).toLong(), TimeUnit.MINUTES)
                 .setConstraints(constraints).build()
         WorkManager.getInstance(application).enqueueUniquePeriodicWork(
             "updateCheck",
@@ -248,7 +256,7 @@ class MainActivity : AppCompatActivity() {
                 this.currentRemote = result.latestVersion
 
                 binding.startButton.setText(R.string.action_update)
-                binding.updateAvaliable.text = "Update Available\nNewest Version available was built at ${result.lastModified}"
+                binding.updateAvaliable.text = "Update available\nNewest version available was built at ${result.lastModified}"
             } else {
                 if(chromiumInstalled) {
                     binding.updateAvaliable.text = getString(R.string.no_update)
@@ -346,5 +354,10 @@ class MainActivity : AppCompatActivity() {
         val notificationManager = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
         notificationManager.cancelAll()
         refreshAll()
+        if(getSharedPreferences("shared_prefs", MODE_PRIVATE).getBoolean("bkd_check_enabled", true)) {
+            startService()
+        }else {
+            WorkManager.getInstance(this@MainActivity).cancelAllWork()
+        }
     }
 }
