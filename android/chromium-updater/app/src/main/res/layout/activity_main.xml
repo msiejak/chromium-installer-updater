@@ -116,7 +116,7 @@
 
         <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"
-            android:visibility="visible"
+            android:visibility="gone"
             android:id="@+id/errorCard"
             android:backgroundTint="?attr/colorErrorContainer"
             android:layout_height="wrap_content"
