@@ -1,6 +1,8 @@
 <resources>
     <style name="Theme.Be4" parent="Theme.Material3.DayNight.NoActionBar">
         <item name="materialCardViewStyle">@style/Theme.Be4.cardViewStyle</item>
+        <item name="android:statusBarColor">?android:attr/colorBackground</item>
+        <item name="android:windowLightStatusBar">?attr/isLightTheme</item>
     </style>
 
     <style name="Theme.Be4.OssLicenses" parent="Theme.Material3.DynamicColors.DayNight"/>
