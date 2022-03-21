@@ -24,6 +24,7 @@ import androidx.lifecycle.lifecycleScope
 import androidx.work.*
 import com.google.android.material.color.DynamicColors
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import com.google.android.material.snackbar.Snackbar
 import com.msiejak.lab.chromiumupdater.databinding.ActivityMainBinding
 import com.msiejak.lab.chromiumupdater.service.UpdateNotificationService
 import kotlinx.coroutines.Dispatchers
@@ -61,7 +62,7 @@ class MainActivity : AppCompatActivity() {
     @SuppressLint("NewApi")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        DynamicColors.applyIfAvailable(this)
+        DynamicColors.applyIfAvailable(this, R.style.ThemeOverlay_Material3_DynamicColors_DayNight)
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
         if(!checkNotPermission()) {
@@ -110,6 +111,13 @@ class MainActivity : AppCompatActivity() {
                     true
                 }
                 else -> true
+            }
+        }
+        if(!getSharedPreferences("shared_prefs", MODE_PRIVATE).getBoolean("explainer_saw", false)) {
+            binding.explainerCard.visibility = View.VISIBLE
+            binding.dismissExplainerCard.setOnClickListener {
+                getSharedPreferences("shared_prefs", MODE_PRIVATE).edit().putBoolean("explainer_saw", true).apply()
+                binding.explainerCard.visibility = View.GONE
             }
         }
         if(chromiumInstalled) {
@@ -191,7 +199,7 @@ class MainActivity : AppCompatActivity() {
             builder.setCancelable(false)
             builder.setIcon(R.drawable.ic_baseline_error_outline_24)
             builder.setPositiveButton(
-                "retry"
+                "Retry"
             ) { _: DialogInterface?, _: Int ->
                 downloadBuild()
             }
@@ -232,7 +240,9 @@ class MainActivity : AppCompatActivity() {
                         }
                     }
                 } catch (e: Exception) {
-                    e.printStackTrace()
+                    runOnUiThread {
+                        showError("An unknown error was occurred while trying to unzip the file. Try clearing the cache and then trying again")
+                    }
                 }
             } finally {
                 zis.close()
@@ -254,17 +264,37 @@ class MainActivity : AppCompatActivity() {
             if (result is UpdateCheckerResult.Success && result.isNewVersion) {
                 binding.startButton.setOnClickListener { downloadBuild() }
                 this.currentRemote = result.latestVersion
-
+                binding.updateCard.visibility = View.VISIBLE
                 binding.startButton.setText(R.string.action_update)
-                binding.updateAvaliable.text = "Update available\nNewest version available was built at ${result.lastModified}"
-            } else {
+                binding.updateAvaliable.text = "\nLatest version available was built on ${result.lastModified}"
+            } else if(result is UpdateCheckerResult.Success) {
                 if(chromiumInstalled) {
-                    binding.updateAvaliable.text = getString(R.string.no_update)
+                    val sb = Snackbar.make(this@MainActivity, binding.root, getText(R.string.no_update), Snackbar.LENGTH_SHORT)
+                    sb.anchorView = binding.startButton
+                    sb.show()
                 }
+            }else if(result is UpdateCheckerResult.Error) {
+                val error = when(result.type) {
+                    ErrorType.NETWORK -> {
+                        "A network error occurred while checking for update. Check your connection and try again."
+                    }
+                    ErrorType.PARSING -> {
+                        "The data received from the server while checking for an update was incorrect. Wait a few minutes and try again."
+                    }
+                }
+                showError(error)
             }
 
             binding.progressIndicator.visibility = View.INVISIBLE
         }
+    }
+
+    private fun showError(text: String) {
+        binding.errorDes.text = text
+        binding.dismissErrorCard.setOnClickListener {
+            binding.errorCard.visibility = View.GONE
+        }
+        binding.errorCard.visibility = View.VISIBLE
     }
 
     private fun install() {
@@ -294,6 +324,7 @@ class MainActivity : AppCompatActivity() {
     private fun reset() {
         if(chromiumInstalled) binding.startButton.setOnClickListener { checkForUpdate() }
         binding.updateAvaliable.text = ""
+        binding.updateCard.visibility = View.GONE
     }
 
     private fun uninstall() {

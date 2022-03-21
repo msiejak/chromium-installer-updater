@@ -1,9 +1,11 @@
 package com.msiejak.lab.chromiumupdater
 
+import android.content.Intent
 import android.content.SharedPreferences
 import android.os.Bundle
 import android.widget.CompoundButton
 import androidx.appcompat.app.AppCompatActivity
+import com.google.android.gms.oss.licenses.OssLicensesMenuActivity
 import com.google.android.material.color.DynamicColors
 import com.google.android.material.slider.Slider
 import com.msiejak.lab.chromiumupdater.databinding.ActivitySettingsBinding
@@ -33,6 +35,23 @@ class SettingsActivity : AppCompatActivity() {
                 slider.isEnabled = true
                 prefs.edit().putBoolean("bkd_check_enabled", true).commit()
             }
+        }
+
+        binding.topAppBar.setOnMenuItemClickListener { item ->
+            when (item.itemId) {
+                R.id.settings -> {
+                    startActivity(Intent(this@SettingsActivity, OssLicensesMenuActivity::class.java))
+                    true
+                }
+                else -> {
+                    finish()
+                    true
+                }
+            }
+        }
+
+        binding.topAppBar.setNavigationOnClickListener {
+            onBackPressed()
         }
 
         slider.value = prefs.getFloat("bkd_check_interval", 45F)

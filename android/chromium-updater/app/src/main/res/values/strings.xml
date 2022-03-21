@@ -14,4 +14,9 @@
     <string name="action_postinstall">Refresh</string>
     <string name="action_uninstall">Uninstall Chromium</string>
     <string name="action_open">App Info</string>
+    <string name="open_source_licenses">Open-source licenses</string>
+    <string name="dismiss">Dismiss</string>
+    <string name="background">Background work</string>
+    <string name="update_avalaible">Update available</string>
+    <string name="error">Error incountered</string>
 </resources>

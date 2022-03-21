@@ -52,6 +52,14 @@
             android:name=".SettingsActivity"
             android:exported="true">
         </activity>
+        <activity
+            android:exported="true"
+            android:name="com.google.android.gms.oss.licenses.OssLicensesMenuActivity"
+            android:theme="@style/Theme.Be4.OssLicenses" />
+        <activity
+            android:exported="false"
+            android:name="com.google.android.gms.oss.licenses.OssLicensesActivity"
+            android:theme="@style/Theme.Be4.OssLicenses" />
     </application>
 
 </manifest>

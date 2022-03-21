@@ -1,11 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
     tools:context=".MainActivity">
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical">
 
     <com.google.android.material.appbar.AppBarLayout
         android:layout_width="match_parent"
@@ -13,10 +16,9 @@
 
         <com.google.android.material.appbar.MaterialToolbar
             android:id="@+id/topAppBar"
-            style="@style/Widget.MaterialComponents.Toolbar.Primary"
             android:layout_width="match_parent"
             android:layout_height="?attr/actionBarSize"
-            app:menu="@menu/top_app_bar"
+            app:menu="@menu/main"
             app:title="@string/app_name" />
 
 
@@ -33,36 +35,134 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:orientation="vertical"
+        android:animateLayoutChanges="true"
         android:padding="12dp">
 
-        <TextView
-            android:id="@+id/versionName"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:textSize="18sp" />
-
-        <View
+        <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"
-            android:layout_height="1dp"
-            android:background="?android:attr/listDivider" />
+            android:id="@+id/explainerCard"
+            android:visibility="gone"
+            android:layout_marginBottom="12dp"
+            android:layout_height="wrap_content">
 
-        <TextView
-            android:layout_width="wrap_content"
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:orientation="vertical"
+                android:layout_height="wrap_content">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_margin="12dp"
+                style="@style/TextAppearance.Material3.BodyLarge"
+                android:text="@string/des" />
+
+            <com.google.android.material.button.MaterialButton
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="8dp"
+                android:text="@string/dismiss"
+                android:id="@+id/dismissExplainerCard"
+                style="?attr/borderlessButtonStyle" />
+
+            </LinearLayout>
+
+        </com.google.android.material.card.MaterialCardView>
+
+
+        <com.google.android.material.card.MaterialCardView
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="@string/des" />
+            android:layout_marginBottom="12dp">
 
-        <TextView
-            android:id="@+id/updateAvaliable"
-            android:layout_width="wrap_content"
+            <TextView
+                android:id="@+id/versionName"
+                android:layout_margin="12dp"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                style="@style/TextAppearance.Material3.TitleLarge"/>
+
+        </com.google.android.material.card.MaterialCardView>
+
+
+        <com.google.android.material.card.MaterialCardView
+            android:layout_width="match_parent"
+            android:visibility="gone"
+            android:id="@+id/update_card"
             android:layout_height="wrap_content"
-            android:layout_marginTop="20dp"
+            android:layout_marginBottom="12dp">
 
-            android:textSize="18sp" />
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_margin="12dp"
+                android:orientation="vertical"
+                android:layout_height="wrap_content">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:text="@string/update_avalaible"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="2dp"
+                style="@style/TextAppearance.Material3.TitleLarge"/>
+            <TextView
+                android:id="@+id/updateAvaliable"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                style="@style/TextAppearance.Material3.BodyLarge"/>
+
+            </LinearLayout>
+
+        </com.google.android.material.card.MaterialCardView>
+
+        <com.google.android.material.card.MaterialCardView
+            android:layout_width="match_parent"
+            android:visibility="gone"
+            android:id="@+id/errorCard"
+            android:backgroundTint="?attr/colorErrorContainer"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="12dp">
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_margin="12dp"
+
+                android:orientation="vertical"
+                android:layout_height="wrap_content">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:text="@string/error"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="2dp"
+                    style="@style/TextAppearance.Material3.TitleLarge"
+                    android:textColor="?attr/colorError"/>
+
+                <TextView
+                    android:id="@+id/errorDes"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    style="@style/TextAppearance.Material3.BodyLarge"/>
+
+                <com.google.android.material.button.MaterialButton
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginEnd="8dp"
+                    android:text="@string/dismiss"
+                    android:layout_marginStart="-12dp"
+                    android:id="@+id/dismissErrorCard"
+                    android:textColor="?attr/colorError"
+                    style="?attr/borderlessButtonStyle" />
+
+            </LinearLayout>
+
+        </com.google.android.material.card.MaterialCardView>
+
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:layout_gravity="bottom"
+
             android:orientation="vertical"
             android:gravity="bottom">
 
@@ -83,7 +183,7 @@
 
             <Button
                 android:id="@+id/uninstallButton"
-                style="Theme.Be4.uninstallButton"
+                style="@style/Widget.Material3.Button.TonalButton"
                 android:enabled="false"
                 app:iconSize="24dp"
                 android:layout_marginRight="3dp"
@@ -95,7 +195,7 @@
 
             <Button
                 android:id="@+id/openButton"
-                style="Theme.Be4.uninstallButton"
+                style="@style/Widget.Material3.Button.TonalButton"
                 android:enabled="false"
                 app:iconSize="24dp"
                 android:layout_marginLeft="3dp"
@@ -111,5 +211,5 @@
 
     </LinearLayout>
 
-
-</LinearLayout>
+    </LinearLayout>
+</androidx.coordinatorlayout.widget.CoordinatorLayout>
