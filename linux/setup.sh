@@ -8,6 +8,7 @@
 
 echo setting up utility...
 sudo apt install curl unzip
+sudo mkdir -p /opt/google/chromium
 sudo mv ./chromium-installer.sh /usr/bin
 sudo mv ./chromium-updater.service /etc/systemd/system
 sudo mv ./chromium-updater.timer /etc/systemd/system
