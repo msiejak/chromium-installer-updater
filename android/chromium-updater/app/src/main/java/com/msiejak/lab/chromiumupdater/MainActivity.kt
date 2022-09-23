@@ -239,6 +239,8 @@ class MainActivity : AppCompatActivity() {
                             fout.close()
                         }
                     }
+                } catch (e: NullPointerException) {
+                    e.printStackTrace()
                 } catch (e: Exception) {
                     runOnUiThread {
                         showError("An unknown error was occurred while trying to unzip the file. Try clearing the cache and then trying again")
@@ -360,12 +362,6 @@ class MainActivity : AppCompatActivity() {
             binding.openButton.isEnabled = false
             binding.startButton.setOnClickListener { downloadBuild() }
         }
-    }
-
-    private fun openChromium() {
-//        val i = Intent(ACTION_VIEW, Uri.parse("https://chromium.org"))
-//        i.setClassName("org.chromium.chrome", "com.google.android.apps.chrome.Main")
-//        startActivity(i)
     }
 
     private fun appInfo() {
