@@ -3,4 +3,4 @@ Version: 1.0
 Architecture: amd64
 Maintainer: MSIEJAK Development <contact@msiejak.dev>
 Description: Automatically installs, and updates Chromium
-Depends: zip, curl, unzip
+Depends: ${shlibs:Depends}, curl, unzip

@@ -1,2 +1,2 @@
 rootProject.name = "Chromium Downloader"
-include ':app'
+include(":app")

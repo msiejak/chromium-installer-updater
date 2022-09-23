@@ -1,38 +1,35 @@
 package com.msiejak.lab.chromiumupdater
 
+import android.Manifest
+import android.annotation.SuppressLint
 import android.app.AlarmManager
 import android.app.DownloadManager
+import android.app.NotificationManager
 import android.app.PendingIntent
-import android.content.BroadcastReceiver
-import android.content.Context
-import android.content.DialogInterface
-import android.content.Intent
-import android.content.IntentFilter
+import android.content.*
+import android.content.pm.PackageManager
 import android.net.ConnectivityManager
 import android.net.Uri
+import android.os.Build
 import android.os.Bundle
+import android.provider.Settings
 import android.view.View
 import android.widget.Toast
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
 import androidx.core.net.toUri
 import androidx.lifecycle.lifecycleScope
-import androidx.work.Constraints
-import androidx.work.ExistingPeriodicWorkPolicy
-import androidx.work.NetworkType
-import androidx.work.PeriodicWorkRequest
-import androidx.work.WorkManager
+import androidx.work.*
+import com.google.android.material.color.DynamicColors
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import com.google.android.material.snackbar.Snackbar
 import com.msiejak.lab.chromiumupdater.databinding.ActivityMainBinding
 import com.msiejak.lab.chromiumupdater.service.UpdateNotificationService
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import java.io.BufferedInputStream
-import java.io.File
-import java.io.FileInputStream
-import java.io.FileNotFoundException
-import java.io.FileOutputStream
-import java.io.IOException
+import java.io.*
 import java.util.concurrent.TimeUnit
 import java.util.zip.ZipEntry
 import java.util.zip.ZipInputStream
@@ -43,11 +40,36 @@ class MainActivity : AppCompatActivity() {
     private lateinit var binding: ActivityMainBinding
     private var currentRemote: Long = 0
     private var chromiumInstalled = false
+    private val requestPermissionLauncher =
+        registerForActivityResult(
+            ActivityResultContracts.RequestPermission()
+        ) { isGranted: Boolean ->
+            if (isGranted) {
+                Toast.makeText(
+                    this@MainActivity,
+                    "Permission granted",
+                    Toast.LENGTH_SHORT
+                ).show()
+            } else {
+                Toast.makeText(
+                    this@MainActivity,
+                    "Permission denied. You will not be notified about new updates",
+                    Toast.LENGTH_LONG
+                ).show()
+            }
+        }
 
+    @SuppressLint("NewApi")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        DynamicColors.applyIfAvailable(this, R.style.ThemeOverlay_Material3_DynamicColors_DayNight)
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
+        if(!checkNotPermission()) {
+            requestNotPermission()
+        }
+        val notificationManager = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
+        notificationManager.cancelAll()
         val alarmManager =
             getSystemService(Context.ALARM_SERVICE) as? AlarmManager
         val pendingIntent =
@@ -58,7 +80,11 @@ class MainActivity : AppCompatActivity() {
         if (pendingIntent != null && alarmManager != null) {
             alarmManager.cancel(pendingIntent)
         }
-        startService()
+        if(getSharedPreferences("shared_prefs", MODE_PRIVATE).getBoolean("bkd_check_enabled", true)) {
+            startService()
+        }else {
+            WorkManager.getInstance(this@MainActivity).cancelAllWork()
+        }
         setChromiumVersionText()
         receiver = object : BroadcastReceiver() {
             override fun onReceive(context: Context?, intent: Intent?) {
@@ -77,13 +103,63 @@ class MainActivity : AppCompatActivity() {
         binding.topAppBar.setOnMenuItemClickListener { item ->
             when (item.itemId) {
                 R.id.refresh -> {
-                    setChromiumVersionText()
-                    checkForUpdate()
+                    refreshAll()
+                    true
+                }
+                R.id.settings -> {
+                    startActivity(Intent(this@MainActivity, SettingsActivity::class.java))
                     true
                 }
                 else -> true
             }
         }
+        if(!getSharedPreferences("shared_prefs", MODE_PRIVATE).getBoolean("explainer_saw", false)) {
+            binding.explainerCard.visibility = View.VISIBLE
+            binding.dismissExplainerCard.setOnClickListener {
+                getSharedPreferences("shared_prefs", MODE_PRIVATE).edit().putBoolean("explainer_saw", true).apply()
+                binding.explainerCard.visibility = View.GONE
+            }
+        }
+        if(chromiumInstalled) {
+            binding.uninstallButton.isEnabled = true
+            binding.openButton.isEnabled = true
+            checkForUpdate()
+        }
+        binding.uninstallButton.setOnClickListener {
+            uninstall()
+        }
+        binding.openButton.setOnClickListener {
+            appInfo()
+        }
+    }
+
+    private fun checkNotPermission(): Boolean {
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU || "Tiramisu".equals(Build.VERSION.CODENAME)) {
+            ContextCompat.checkSelfPermission(
+                this@MainActivity,
+                Manifest.permission.POST_NOTIFICATIONS
+            ) == PackageManager.PERMISSION_GRANTED
+        }else true
+    }
+
+    @SuppressLint("InlinedApi")
+    private fun requestNotPermission() {
+        MaterialAlertDialogBuilder(this@MainActivity)
+            .setTitle("Permissions Needed")
+            .setMessage("In order to be notified about new Chromium builds, you need to grant permission to send notifications")
+            .setPositiveButton("Okay") { _, _ ->
+                requestPermissionLauncher.launch(
+                    Manifest.permission.POST_NOTIFICATIONS
+                )
+            }
+            .setNegativeButton("No thanks") { _, _ ->
+                Toast.makeText(
+                    this@MainActivity,
+                    "You will not be notified about new updates",
+                    Toast.LENGTH_LONG
+                ).show()
+            }
+            .show()
     }
 
     private fun startService() {
@@ -92,13 +168,14 @@ class MainActivity : AppCompatActivity() {
             .setRequiredNetworkType(NetworkType.CONNECTED)
             .build()
         val periodicWorkRequest =
-            PeriodicWorkRequest.Builder(UpdateNotificationService::class.java, 40, TimeUnit.MINUTES)
+            PeriodicWorkRequest.Builder(UpdateNotificationService::class.java, getSharedPreferences("shared_prefs", MODE_PRIVATE).getFloat("bkd_check_interval", 30F).toLong(), TimeUnit.MINUTES)
                 .setConstraints(constraints).build()
         WorkManager.getInstance(application).enqueueUniquePeriodicWork(
             "updateCheck",
             ExistingPeriodicWorkPolicy.REPLACE,
             periodicWorkRequest
         )
+
     }
 
     private fun downloadBuild() {
@@ -122,7 +199,7 @@ class MainActivity : AppCompatActivity() {
             builder.setCancelable(false)
             builder.setIcon(R.drawable.ic_baseline_error_outline_24)
             builder.setPositiveButton(
-                "retry"
+                "Retry"
             ) { _: DialogInterface?, _: Int ->
                 downloadBuild()
             }
@@ -162,8 +239,12 @@ class MainActivity : AppCompatActivity() {
                             fout.close()
                         }
                     }
-                } catch (e: Exception) {
+                } catch (e: NullPointerException) {
                     e.printStackTrace()
+                } catch (e: Exception) {
+                    runOnUiThread {
+                        showError("An unknown error was occurred while trying to unzip the file. Try clearing the cache and then trying again")
+                    }
                 }
             } finally {
                 zis.close()
@@ -185,15 +266,37 @@ class MainActivity : AppCompatActivity() {
             if (result is UpdateCheckerResult.Success && result.isNewVersion) {
                 binding.startButton.setOnClickListener { downloadBuild() }
                 this.currentRemote = result.latestVersion
-
+                binding.updateCard.visibility = View.VISIBLE
                 binding.startButton.setText(R.string.action_update)
-                binding.updateAvaliable.text = "Update Available\nNewest Version available was built at ${result.lastModified}"
-            } else {
-                binding.updateAvaliable.text = getString(R.string.no_update)
+                binding.updateAvaliable.text = "\nLatest version available was built on ${result.lastModified}"
+            } else if(result is UpdateCheckerResult.Success) {
+                if(chromiumInstalled) {
+                    val sb = Snackbar.make(this@MainActivity, binding.root, getText(R.string.no_update), Snackbar.LENGTH_SHORT)
+                    sb.anchorView = binding.startButton
+                    sb.show()
+                }
+            }else if(result is UpdateCheckerResult.Error) {
+                val error = when(result.type) {
+                    ErrorType.NETWORK -> {
+                        "A network error occurred while checking for update. Check your connection and try again."
+                    }
+                    ErrorType.PARSING -> {
+                        "The data received from the server while checking for an update was incorrect. Wait a few minutes and try again."
+                    }
+                }
+                showError(error)
             }
 
             binding.progressIndicator.visibility = View.INVISIBLE
         }
+    }
+
+    private fun showError(text: String) {
+        binding.errorDes.text = text
+        binding.dismissErrorCard.setOnClickListener {
+            binding.errorCard.visibility = View.GONE
+        }
+        binding.errorCard.visibility = View.VISIBLE
     }
 
     private fun install() {
@@ -208,15 +311,28 @@ class MainActivity : AppCompatActivity() {
         install.putExtra(Intent.EXTRA_NOT_UNKNOWN_SOURCE, true)
         install.data = uri
         startActivity(install)
-        getSharedPreferences("shared_prefs", MODE_PRIVATE).edit().putLong("build", currentRemote)
-            .apply()
-        setChromiumVersionText()
-        reset()
+        UpdateChecker().getLatestVersion(this) { result ->
+            if (result is UpdateCheckerResult.Success) {
+                this.currentRemote = result.latestVersion
+                getSharedPreferences("shared_prefs", MODE_PRIVATE).edit()
+                    .putLong("build", this.currentRemote)
+                    .apply()
+                setChromiumVersionText()
+                reset()
+            }
+        }
     }
 
     private fun reset() {
-        binding.startButton.setOnClickListener { checkForUpdate() }
+        if(chromiumInstalled) binding.startButton.setOnClickListener { checkForUpdate() }
         binding.updateAvaliable.text = ""
+        binding.updateCard.visibility = View.GONE
+    }
+
+    private fun uninstall() {
+        val intent = Intent(Intent.ACTION_DELETE)
+        intent.data = Uri.parse("package:org.chromium.chrome")
+        startActivity(intent)
     }
 
     private fun setChromiumVersionText() {
@@ -227,14 +343,48 @@ class MainActivity : AppCompatActivity() {
             binding.startButton.setText(R.string.check_update)
             chromiumInstalled = true
         } catch (e: Exception) {
+            chromiumInstalled = false
             e.printStackTrace()
             binding.startButton.setText(R.string.action_install)
         }
         binding.versionName.text = txt
     }
 
+    private fun refreshAll() {
+        setChromiumVersionText()
+        reset()
+        if(chromiumInstalled) {
+            binding.uninstallButton.isEnabled = true
+            binding.openButton.isEnabled = true
+            checkForUpdate()
+        }else {
+            binding.uninstallButton.isEnabled = false
+            binding.openButton.isEnabled = false
+            binding.startButton.setOnClickListener { downloadBuild() }
+        }
+    }
+
+    private fun appInfo() {
+        val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
+        intent.data = Uri.parse("package:org.chromium.chrome")
+        startActivity(intent)
+    }
+
     override fun onDestroy() {
         super.onDestroy()
         unregisterReceiver(receiver)
+    }
+
+
+    override fun onRestart() {
+        super.onRestart()
+        val notificationManager = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
+        notificationManager.cancelAll()
+        refreshAll()
+        if(getSharedPreferences("shared_prefs", MODE_PRIVATE).getBoolean("bkd_check_enabled", true)) {
+            startService()
+        }else {
+            WorkManager.getInstance(this@MainActivity).cancelAllWork()
+        }
     }
 }

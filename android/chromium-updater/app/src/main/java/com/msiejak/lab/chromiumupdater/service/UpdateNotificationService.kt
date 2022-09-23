@@ -38,13 +38,12 @@ class UpdateNotificationService(context: Context, workerParams: WorkerParameters
                 val builder = NotificationCompat.Builder(applicationContext, "0")
                     .setSmallIcon(R.drawable.ic_baseline_update_24)
                     .setContentTitle(c.getString(R.string.not_title))
-                    .setContentText("An update for chromium is available")
+                    .setContentText("An update for Chromium is available")
                     .setPriority(NotificationCompat.PRIORITY_DEFAULT)
                     .setAutoCancel(true)
                     .setContentIntent(pendingIntent)
                 createNotificationChannel()
                 with(NotificationManagerCompat.from(applicationContext)) {
-                    // notificationId is a unique int for each notification that you must define
                     notify(0, builder.build())
                 }
             }
@@ -52,8 +51,6 @@ class UpdateNotificationService(context: Context, workerParams: WorkerParameters
     }
 
     private fun createNotificationChannel() {
-        // Create the NotificationChannel, but only on API 26+ because
-        // the NotificationChannel class is new and not in the support library
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val name = c.getString(R.string.channel_name)
             val descriptionText = c.getString(R.string.channel_description)
@@ -72,7 +69,7 @@ class UpdateNotificationService(context: Context, workerParams: WorkerParameters
     override fun doWork(): Result {
         Looper.prepare()
         run()
-        if (Build.VERSION.SDK_INT == 26) {
+        if (Build.VERSION.SDK_INT >= 26) {
             val dtf: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss")
             val now: LocalDateTime = LocalDateTime.now()
             c.getSharedPreferences("update_check_log", MODE_PRIVATE).edit()

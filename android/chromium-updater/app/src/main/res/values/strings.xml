@@ -1,12 +1,22 @@
 <resources>
-    <string name="app_name">Chromium Downloader</string>
+    <string name="app_name">Chromium Manager</string>
     <string name="des">This app will install or update to the latest version of the Chromium browser for Android.</string>
     <string name="action_install">Install Chromium</string>
     <string name="action_update">Update Chromium</string>
     <string name="not_installed">Chromium is not installed</string>
-    <string name="check_update">check for update</string>
+    <string name="check_update">Check for update</string>
     <string name="channel_name">updates</string>
     <string name="channel_description">updates</string>
     <string name="not_title">Update available</string>
     <string name="no_update">No Update Available</string>
+    <string name="auto_update">Auto update in background</string>
+    <string name="update_check">Check for updates in the background</string>
+    <string name="action_postinstall">Refresh</string>
+    <string name="action_uninstall">Uninstall Chromium</string>
+    <string name="action_open">App Info</string>
+    <string name="open_source_licenses">Open-source licenses</string>
+    <string name="dismiss">Dismiss</string>
+    <string name="background">Background work</string>
+    <string name="update_avalaible">Update available</string>
+    <string name="error">Error encountered</string>
 </resources>

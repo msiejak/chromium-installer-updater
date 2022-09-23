@@ -3,7 +3,20 @@
   <component name="DesignSurface">
     <option name="filePathToZoomLevelMap">
       <map>
+        <entry key="../../../../../../../../layout/custom_preview.xml" value="0.2712962962962963" />
+        <entry key="app/src/main/res/drawable-v24/ic_delete.xml" value="0.1195" />
+        <entry key="app/src/main/res/drawable-v24/ic_delete_x.xml" value="0.1195" />
+        <entry key="app/src/main/res/drawable-v24/ic_package_verifier_removed.xml" value="0.1195" />
+        <entry key="app/src/main/res/drawable-v24/ic_remove_24dp.xml" value="0.1195" />
+        <entry key="app/src/main/res/drawable-v24/ic_settings_delete.xml" value="0.1195" />
+        <entry key="app/src/main/res/drawable/ic_baseline_arrow_back_24.xml" value="0.137" />
+        <entry key="app/src/main/res/drawable/ic_baseline_update_24.xml" value="0.1195" />
+        <entry key="app/src/main/res/drawable/ic_trash_can.xml" value="0.1195" />
         <entry key="app/src/main/res/layout/activity_main.xml" value="0.1" />
+        <entry key="app/src/main/res/layout/activity_settings.xml" value="0.1" />
+        <entry key="app/src/main/res/menu/main.xml" value="0.1265625" />
+        <entry key="app/src/main/res/menu/settings.xml" value="0.12552083333333333" />
+        <entry key="app/src/main/res/menu/top_app_bar.xml" value="0.2324074074074074" />
       </map>
     </option>
   </component>
