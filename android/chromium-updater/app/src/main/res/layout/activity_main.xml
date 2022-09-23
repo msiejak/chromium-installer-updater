@@ -167,7 +167,7 @@
 
             <Button
                 android:id="@+id/startButton"
-                app:icon="@drawable/ic_outline_get_app_24"
+                app:icon="@drawable/ic_baseline_get_app_24"
                 android:layout_width="match_parent"
                 app:iconSize="24dp"
                 android:layout_height="wrap_content" />
